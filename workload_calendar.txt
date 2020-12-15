@@ -1,0 +1,20 @@
+main menu:
+-> active tasks overview
+-> set standard daily workhours for weekdays / weekend
+-> override with custom workhours for current day
+-> generate day schedule for these hours on the spot using a deterministic algorithm (no randomness)
+
+tasks:
+-> deadline
+-> minimum workload (hours)
+-> maximum workload (hours)
+-> requires (other task(s) that needs to be done beforehand)
+-> priority
+
+The algorithm then goes backwards from the deadline, starting with the buffer (max_workload - min_workload) and then the work time. Then takes a look at that task's requirements and tries to schedule them in.
+Algorithm needs to give priorities accordingly and find the best possible schedule. Given the known info about to-do tasks, it will then display the current day's schedule. If the day's schedule isn't full (because there is still some spare time to complete other tasks), then the closest tasks (time-wise) should be pulled forwards.
+
+Ability to add in normal calendar appointments for fixed appointments, that are shown in the daily schedule as they would in a calendar, and have to be scheduled around.
+
+Ability to add/remove workload to tasks after creating them (with validation for >0)
+Ability to change deadlines for tasks after creating them (with validation for compatibility with previous tasks)
