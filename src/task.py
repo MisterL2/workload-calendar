@@ -2,12 +2,18 @@ from arrow import Arrow
 import util
 
 class Task:
-    def __init__(self, name: str, timeRequirement: int, priority: int, deadline: str, minBlock: int):
+    @staticmethod
+    def fromDict(valueDict: dict):
+        deadlineArrow = util.dateTimeStringToArrow(valueDict["deadline"])
+        return Task(valueDict["name"], valueDict["timeRequirement"], valueDict["priority"], deadlineArrow, valueDict["minBlock"])
+
+    def __init__(self, name: str, timeRequirement: int, priority: int, deadline: Arrow, minBlock: int):
+        self.__deadlineArrow = deadline
         self.__data = {
             "name" : name,
             "timeRequirement" : timeRequirement, # In Minutes
             "priority" : priority,
-            "deadline" : deadline,
+            "deadline" : util.dateString(deadline, time=True),
             "minBlock" : minBlock  # If this is 120, it means that this task should not be split up into chunks smaller than 120mins.
         }
 
@@ -27,7 +33,11 @@ class Task:
         return self.__data["priority"]
 
     @property
-    def deadline(self):
+    def deadline(self) -> Arrow:
+        return self.__deadlineArrow
+
+    @property
+    def deadlineString(self) -> str:
         return self.__data["deadline"]
 
     @property

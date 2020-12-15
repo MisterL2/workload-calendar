@@ -1,27 +1,31 @@
 import arrow
 from pyutil import intput
 from task import *
-from storage import *
+import storage
 import util
 
-config = {}
-futureDays = []
-tasks = []
+config = storage.loadConfig()
+futureDays = storage.initDays()
+tasks = storage.loadTasks()
+
 
 def mainMenu():
     # Autosaving
-    saveConfig(config)
-    saveDays(futureDays)
-    saveTasks(tasks)
+    storage.saveConfig(config)
+    storage.saveDays(futureDays)
+    storage.saveTasks(tasks)
     try:
         print("1) Add Task")
         print("2) Show Active Tasks")
+        print("3) Show All Days (debug)")
         choice = intput("", "Not a valid number!")
         
         if choice == 1:
             createTask()
         elif choice == 2:
             showActiveTasks()
+        elif choice == 3:
+            showDays() # Debug
         else:
             print("Invalid number!")
             mainMenu()
@@ -32,7 +36,6 @@ def mainMenu():
 def createTask():
     try:
         name = input("Please enter the task name: ")
-
         valid = False
         while not valid:
             try:
@@ -91,5 +94,9 @@ def showActiveTasks():
 def showTaskSummary(task: Task):
     # To do - show progress in ascii art, etc etc
     print(task)
+
+def showDays(): # Debug
+    for day in futureDays:
+        print(day)
 
 print("Thanks for using the workload balancer!")

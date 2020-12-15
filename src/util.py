@@ -1,4 +1,5 @@
 from customtime import Time
+import arrow
 
 def dateString(datetime, time=False):
     if time:
@@ -15,3 +16,9 @@ def timeParseAsTuple(timeString: str) -> (int, int):
     hours = int(timeString.split(":")[0])
     minutes = int(timeString.split(":")[1])
     return hours, minutes
+
+def dateTimeStringToArrow(dateString: str) -> arrow.Arrow:
+    return arrow.get(dateString,"DD.MM.YYYY @ HH:mm")
+
+def dateStringToArrow(dateString: str) -> arrow.Arrow:
+    return arrow.get(dateString,"DD.MM.YYYY")
