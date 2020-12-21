@@ -1,18 +1,21 @@
-from datetime import *
+from datetime import date
 import util
 from timeslot import TimeSlot
-from base import Base
+from comparable import Comparable
+from appointment import Appointment
 
-class Day(Base):
+class Day(Comparable):
     @staticmethod
     def fromDict(valueDict: dict):
         parsedDate = util.dateStringToArrow(valueDict["dateString"]).date()
-        timeslots = [TimeSlot.fromString(t) for t in valueDict["timeslots"]]
-        return Day(parsedDate, timeslots)
+        timeSlots = [TimeSlot.fromDict(t) for t in valueDict["timeSlots"]]
+        appointments = [Appointment.fromDict(appDict) for appDict in valueDict["appointments"]]
+        return Day(parsedDate, timeSlots, appointments)
 
-    def __init__(self, date: date, timeslots: [TimeSlot]):
+    def __init__(self, date: date, timeSlots: [TimeSlot], appointments: [Appointment]):
         self.date = date
-        self.timeslots = timeslots
+        self.timeSlots = timeSlots
+        self.appointments = appointments
     
     @property
     def month(self):
@@ -31,17 +34,27 @@ class Day(Base):
         return util.dateString(self.date)
 
     def timeInMinutes(self) -> int:
-        return sum([timeslot.timeInMinutes() for timeslot in self.timeslots])
+        return sum([timeSlot.timeInMinutes() for timeSlot in self.timeSlots])
 
-    def export(self):
+    def addAppointment(self, appointment: Appointment):
+        # Warn user if this overlaps another appointment, but accept it (overlapping appointments are valid)
+        for existingAppointment in self.appointments:
+            if existingAppointment.overlaps(appointment):
+                print(f"WARNING: Added appointment overlaps with '{existingAppointment}'")
+
+        self.appointments.append(appointment)
+
+    def export(self) -> dict:
         return {
             "dateString" : self.dateString,
-            "timeslots" : self.timeslots
+            "timeSlots" : [ts.export() for ts in self.timeSlots],
+            "appointments" : [app.export() for app in self.appointments]
             }
 
     def __repr__(self) -> str:
-        timeslotString = "; ".join([t for t in self.timeslots])
-        return f"{self.dateString} ({self.timeInMinutes()/60:.1f} h) Timeslots: [{timeslotString}]"
+        timeSlotString = "; ".join([t for t in self.timeSlots])
+        appointmentString = "; ".join([repr(a) for a in self.appointments])
+        return f"{self.dateString} ({self.timeInMinutes()/60:.1f} h) Timeslots: [{timeSlotString}] Appointments: [{appointmentString}]"
 
     def __lt__(self, other) -> bool:
         return self.date < other.date

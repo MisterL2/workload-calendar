@@ -1,9 +1,15 @@
-from base import Base
+from comparable import Comparable
 
-class Time(Base):
+class Time(Comparable):
+    @staticmethod
+    def fromString(timeString: str):
+        hours = int(timeString.split(":")[0])
+        minutes = int(timeString.split(":")[1])
+        return Time(hours, minutes)
+
     def __init__(self, hours: int, minutes: int):
         if hours > 23 or minutes > 59:
-            raise Exception(f"Invalid Time: {hours:02} h {minutes:02} min")
+            raise ValueError(f"Invalid Time: {hours:02} h {minutes:02} min")
         self.hours = hours
         self.minutes = minutes
 
@@ -36,6 +42,9 @@ class Time(Base):
             minutes -= 60
             hours += 1
         return Time(hours, minutes)
+
+    def export(self) -> str:
+        return repr(self)
 
     def __repr__(self) -> str:
         return f"{self.hours:02}:{self.minutes:02}"

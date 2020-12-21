@@ -14,6 +14,7 @@ def saveTasks(tasks):
 
 def saveDays(days):
     parsedDays = [day.export() for day in days]
+    # print(parsedDays)
     save(parsedDays, "days")
 
 def save(data, fileName: str):
@@ -24,7 +25,7 @@ def save(data, fileName: str):
 
 # Load
 
-def initDays():
+def initDays() -> [Day]:
     days = [Day.fromDict(d) for d in load("days")]
 
     # Remove old days
@@ -41,17 +42,17 @@ def initDays():
         startDate = today
 
     currentDate = arrow.get(startDate)
-    for i in range(daysToCreate): # Fill up days to get up to dayCount
+    for _ in range(daysToCreate): # Fill up days to get up to dayCount
         currentDate = currentDate.shift(days=1)
-        newDay = Day(currentDate, []) # TODO add actual timeslots for the day based on config default for that weekday
+        newDay = Day(currentDate, [], []) # TODO add actual timeslots for the day based on config default for that weekday
         days.append(newDay)
 
     return days
 
-def loadConfig():
+def loadConfig() -> {}:
     return load("config")
 
-def loadTasks():
+def loadTasks() -> [Task]:
     taskList = load("tasks")
     tasks = [Task.fromDict(d) for d in taskList]
     return tasks
