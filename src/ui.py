@@ -9,39 +9,44 @@ from datetime import date
 import storage
 import util
 
-config = storage.loadConfig()
+config = storage.initConfig()
 days = storage.initDays()
 tasks = storage.loadTasks()
 
+def autosave():
+    # Autosaving
+    storage.saveConfig(config)
+    storage.saveDays(days)
+    storage.saveTasks(tasks)
 
 def mainMenu():
     while True:
-        # Autosaving
-        storage.saveConfig(config)
-        storage.saveDays(days)
-        storage.saveTasks(tasks)
+        autosave()
         try:
-            print("1) Add Task")
-            print("2) Show Active Tasks")
-            print("3) Show All Days (debug)")
-            print("4) Add Appointment")
+            print("1) Show Active Tasks")
+            print("2) Show All Days (debug)")
+            print("3) Add Task")
+            print("4) Add TimeSlots")
+            print("5) Add Appointment")
             print("9) Exit")
             choice = intput("", "Not a valid number!")
             
             if choice == 1:
-                addTask()
-            elif choice == 2:
                 showActiveTasks()
+            elif choice == 2:
+                showDays() # Debug
             elif choice == 3:
-                showDays() # Debug2
+                addTask() 
             elif choice == 4:
-                addAppointment() 
+                addTimeSlotsMenu()
+            elif choice == 5:
+                addAppointment()
             elif choice == 9:
                 return
             else:
                 print("Invalid number!")
         except KeyboardInterrupt:
-            print("Program stopped by user.")
+            print("Aborted by user.")
             
 
 
@@ -142,7 +147,39 @@ def addAppointment():
 
     day.addAppointment(appointment)
 
-        
+def addTimeSlot(weekday: bool):
+    while True:
+        try:
+            timeSlot = timeSlotInput("Please enter the start time of the TimeSlot (HH:MM): ", "Please enter the end time of the TimeSlot (HH:MM): ")
+            if weekday:
+                lst = config["weekdayTimeSlots"]
+            else:
+                lst = config["weekendTimeSlots"]
 
+            for timeSlotDict in lst:
+                ts = TimeSlot.fromDict(timeSlotDict)
+                if ts.overlaps(timeSlot):
+                    raise ValueError(f"Overlapping TimeSlot in Config: {ts}. Cannot add new time slot!")
+            lst.append(timeSlot.export())
+            return
+        except ValueError as e:
+            print(e)
+
+def addTimeSlotsMenu():
+    while True:
+        autosave()
+        print("1) Add Weekday TimeSlot")
+        print("2) Add Weekend TimeSlot")
+        print("9) Back to Main Menu")
+        choice = intput("", "Not a valid number!")
+        
+        if choice == 1:
+            addTimeSlot(weekday=True)
+        elif choice == 2:
+            addTimeSlot(weekday=False)
+        elif choice == 9:
+            return
+        else:
+            print("Invalid number!")
 
 print("Thanks for using the workload balancer!")

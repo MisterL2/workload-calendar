@@ -19,7 +19,7 @@ def saveDays(days):
 
 def save(data, fileName: str):
     serialized = json.dumps(data)
-    with open(f"./data/{fileName}.json","w") as f:
+    with open(f"./data/{fileName}.json", "w") as f:
         f.write(serialized)
 
 
@@ -49,8 +49,19 @@ def initDays() -> [Day]:
 
     return days
 
-def loadConfig() -> {}:
-    return load("config")
+def initConfig() -> {}:
+    config = load("config")
+
+    defaults = {
+        "weekdayTimeSlots" : [],
+        "weekendTimeSlots" : []
+    }
+
+    # Fill missing keys with defaults
+    for defaultKey in defaults.keys():
+        if defaultKey not in config.keys():
+            config[defaultKey] = defaults[defaultKey]
+    return config
 
 def loadTasks() -> [Task]:
     taskList = load("tasks")
