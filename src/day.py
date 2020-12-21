@@ -64,6 +64,13 @@ class Day(Comparable):
 
         self.appointments.append(appointment)
 
+    def removeAppointment(self, name: str) -> bool:
+        for app in self.appointments:
+            if app.name == name:
+                self.appointments.remove(app)
+                return True
+        return False
+
     def addTimeSlot(self, timeslot: TimeSlot):
         for existingTimeSlot in self.timeSlots:
             if existingTimeSlot.overlaps(timeslot):

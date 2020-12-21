@@ -27,8 +27,7 @@ def mainMenu():
             print("2) Show All Days (debug)")
             print("3) Add Task")
             print("4) Add TimeSlots")
-            print("5) Add Appointment")
-            print("6) Edit Day")
+            print("5) Edit Day")
             print("9) Exit")
             choice = intput("", "Not a valid number!")
             
@@ -41,8 +40,6 @@ def mainMenu():
             elif choice == 4:
                 addTimeSlotsMenu()
             elif choice == 5:
-                addAppointment()
-            elif choice == 6:
                 daySelectionMenu()
             elif choice == 9:
                 return
@@ -142,13 +139,20 @@ def fetchDay(date: date) -> Day:
             return day
     raise IndexError(f"Day '{date}' does not exist in the calendar. Is it in the past or very far in the future?")
 
-def addAppointment():
+def addAppointment(day: Day):
     name = input("Please enter a name for the Appointment: ")
-    day = dayInput("Please enter the DAY ([DATEFORMAT]) of the Appointment: ")
     timeSlot = timeSlotInput("Please enter the start time of the Appointment (HH:MM): ", "Please enter the end time of the Appointment (HH:MM): ")
     appointment = Appointment(name, timeSlot)
 
     day.addAppointment(appointment)
+
+def removeAppointment(day: Day):
+    name = input("Please enter the name of the Appointment: ")
+    appointmentExisted = day.removeAppointment(name)
+    if appointmentExisted:
+        print(f"Appointment '{name}' removed.")
+    else:
+        print(f"Error: No Appointment with name '{name}' on this day!")
 
 def addTimeSlot(weekday: bool):
     while True:
@@ -204,8 +208,8 @@ def editDayMenu(day: Day):
         print(day)
         print("1) Mark as special (No Default Timestamps)")
         print("2) Mark as normal (Default Timestamps apply)")
-        print("3) Add Appointment (TBD, migrate here from main menu)")
-        print("4) Remove Appointment (TBD)")
+        print("3) Add Appointment")
+        print("4) Remove Appointment")
         print("9) Back to Main Menu")
         choice = intput("", "Not a valid number!")
         
@@ -213,6 +217,10 @@ def editDayMenu(day: Day):
             markDaySpecial(day)
         elif choice == 2:
             unmarkDaySpecial(day)
+        elif choice == 3:
+            addAppointment(day)
+        elif choice == 4:
+            removeAppointment(day)
         elif choice == 9:
             return
         else:
