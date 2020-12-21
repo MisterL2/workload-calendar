@@ -9,8 +9,8 @@ from datetime import date
 import storage
 import util
 
-config = storage.initConfig()
-days = storage.initDays()
+config = storage.initConfig() # Objects are stored in their exported form (dict) in the config
+days = storage.initDays(config)
 tasks = storage.loadTasks()
 
 def autosave():

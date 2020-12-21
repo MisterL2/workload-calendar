@@ -72,12 +72,12 @@ class Day(Comparable):
     def export(self) -> dict:
         return {
             "dateString" : self.dateString,
-            "timeSlots" : [ts.export() for ts in self.timeSlots],
+            "timeSlots" : [ts.export() for ts in self.timeSlots if not ts.temporary],
             "appointments" : [app.export() for app in self.appointments]
-            }
+        }
 
     def __repr__(self) -> str:
-        timeSlotString = "; ".join([t for t in self.timeSlots])
+        timeSlotString = "; ".join([repr(t) for t in self.timeSlots])
         appointmentString = "; ".join([repr(a) for a in self.appointments])
         return f"{self.dateString} ({self.timeInMinutes()/60:.1f} h) Timeslots: [{timeSlotString}] Appointments: [{appointmentString}]"
 

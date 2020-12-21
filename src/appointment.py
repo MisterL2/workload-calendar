@@ -21,4 +21,4 @@ class Appointment():
         }
 
     def __repr__(self) -> str:
-        return f"Appointment[name='{self.name}', timeSlot='{self.timeSlot}'"
+        return f"Appointment[ name='{self.name}', timeSlot='{self.timeSlot}' ]"

@@ -5,19 +5,20 @@ import util
 
 class TimeSlot(Comparable):
     @staticmethod
-    def fromString(timeslotString: str):
+    def fromString(timeslotString: str, temporary=False):
         start, end = timeslotString.split(" - ")
-        return TimeSlot(util.timeParse(start), util.timeParse(end))
+        return TimeSlot(util.timeParse(start), util.timeParse(end), temporary=temporary)
 
     @staticmethod
-    def fromDict(valueDict: dict):
+    def fromDict(valueDict: dict, temporary=False):
         startTimeString = valueDict['startTime']
         endTimeString = valueDict['endTime']
-        return TimeSlot(util.timeParse(startTimeString), util.timeParse(endTimeString))
+        return TimeSlot(util.timeParse(startTimeString), util.timeParse(endTimeString), temporary=temporary)
 
-    def __init__(self, start: Time, end: Time):
+    def __init__(self, start: Time, end: Time, temporary=False):
         self.__start = start
         self.__end = end
+        self.temporary = temporary
         if self.start >= self.end:
             raise ValueError(f"Start date cannot be after the end date! {self.start} was before {self.end}")
     

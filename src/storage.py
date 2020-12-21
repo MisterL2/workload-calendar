@@ -2,6 +2,7 @@ import json
 import arrow
 from task import Task
 from day import Day
+from timeslot import TimeSlot
 
 # Save
 
@@ -25,7 +26,7 @@ def save(data, fileName: str):
 
 # Load
 
-def initDays() -> [Day]:
+def initDays(config: {}) -> [Day]:
     days = [Day.fromDict(d) for d in load("days")]
 
     # Remove old days
@@ -46,6 +47,23 @@ def initDays() -> [Day]:
         currentDate = currentDate.shift(days=1)
         newDay = Day(currentDate, [], []) # TODO add actual timeslots for the day based on config default for that weekday
         days.append(newDay)
+
+    # Load config-TimeSlots onto days if they don't exist already
+    for day in days:
+        if day.date.weekday() >= 5: # Weekend (Sat/Sun)
+            lst = config["weekendTimeSlots"]
+        else:
+            lst = config["weekdayTimeSlots"]
+
+        for timeSlotDict in lst:
+            timeSlot = TimeSlot.fromDict(timeSlotDict, temporary=True) # These automatic TimeSlots are NOT persisted
+            try:
+                day.addTimeSlot(timeSlot)
+            except ValueError:
+                if timeSlot in day.timeSlots:
+                    pass # Already added
+                else:
+                    print(f"WARNING: Default TimeSlot {timeSlot} could not be added to {day}")
 
     return days
 
