@@ -28,6 +28,7 @@ def mainMenu():
             print("3) Add Task")
             print("4) Add TimeSlots")
             print("5) Add Appointment")
+            print("6) Edit Day")
             print("9) Exit")
             choice = intput("", "Not a valid number!")
             
@@ -41,6 +42,8 @@ def mainMenu():
                 addTimeSlotsMenu()
             elif choice == 5:
                 addAppointment()
+            elif choice == 6:
+                daySelectionMenu()
             elif choice == 9:
                 return
             else:
@@ -181,5 +184,39 @@ def addTimeSlotsMenu():
             return
         else:
             print("Invalid number!")
+
+
+def markDaySpecial(day):
+    day.markSpecial() # Fully handled by day
+
+def unmarkDaySpecial(day):
+    day.unmarkSpecial()
+    storage.initDay(day, config) # Re-adding temporary/default TimeSlots
+
+def daySelectionMenu():
+    day = dayInput("Please enter the DAY ([DATEFORMAT]) you want to select: ")
+    return editDayMenu(day)
+
+def editDayMenu(day: Day):
+    while True:
+        autosave()
+        print("=====================")
+        print(day)
+        print("1) Mark as special (No Default Timestamps)")
+        print("2) Mark as normal (Default Timestamps apply)")
+        print("3) Add Appointment (TBD, migrate here from main menu)")
+        print("4) Remove Appointment (TBD)")
+        print("9) Back to Main Menu")
+        choice = intput("", "Not a valid number!")
+        
+        if choice == 1:
+            markDaySpecial(day)
+        elif choice == 2:
+            unmarkDaySpecial(day)
+        elif choice == 9:
+            return
+        else:
+            print("Invalid number!")
+
 
 print("Thanks for using the workload balancer!")

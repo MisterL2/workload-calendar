@@ -10,14 +10,16 @@ class Day(Comparable):
         parsedDate = util.dateStringToArrow(valueDict["dateString"]).date()
         timeSlots = [TimeSlot.fromDict(t) for t in valueDict["timeSlots"]]
         appointments = [Appointment.fromDict(appDict) for appDict in valueDict["appointments"]]
-        return Day(parsedDate, timeSlots, appointments)
+        isSpecial = valueDict["special"]
+        return Day(parsedDate, timeSlots, appointments, special=isSpecial)
 
-    def __init__(self, date: date, timeSlots: [TimeSlot], appointments: [Appointment]): # Remember: don't use mutables as default params
+    def __init__(self, date: date, timeSlots: [TimeSlot], appointments: [Appointment], special=False): # Remember: don't use mutables as default params
         self.date = date
         self.timeSlots = []
         for timeSlot in timeSlots:
             self.addTimeSlot(timeSlot) # This validates that there are no overlapping timeslots
         self.appointments = appointments
+        self.special = special
     
     @property
     def month(self):
@@ -69,17 +71,34 @@ class Day(Comparable):
 
         self.timeSlots.append(timeslot)
 
+    def markSpecial(self):
+        self.special = True
+        # Remove all temporary timeslots
+        self.timeSlots = [ts for ts in self.timeSlots if not ts.temporary]
+
+    def unmarkSpecial(self):
+        self.special = False
+        # Re-add all temporary timeslots (This is done in the "ui.py" LUL)
+
     def export(self) -> dict:
         return {
             "dateString" : self.dateString,
             "timeSlots" : [ts.export() for ts in self.timeSlots if not ts.temporary],
-            "appointments" : [app.export() for app in self.appointments]
+            "appointments" : [app.export() for app in self.appointments],
+            "special" : self.special
         }
 
     def __repr__(self) -> str:
         timeSlotString = "; ".join([repr(t) for t in self.timeSlots])
         appointmentString = "; ".join([repr(a) for a in self.appointments])
-        return f"{self.dateString} ({self.timeInMinutes()/60:.1f} h) Timeslots: [{timeSlotString}] Appointments: [{appointmentString}]"
+
+        # Mainly for debug
+        if self.special:
+            specialIdentifier = "S"
+        else: # Default
+            specialIdentifier = "D"
+
+        return f"{self.dateString} {specialIdentifier} ({self.timeInMinutes()/60:.1f} h) Timeslots: [{timeSlotString}] Appointments: [{appointmentString}]"
 
     def __lt__(self, other) -> bool:
         return self.date < other.date

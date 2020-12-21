@@ -50,22 +50,30 @@ def initDays(config: {}) -> [Day]:
 
     # Load config-TimeSlots onto days if they don't exist already
     for day in days:
-        if day.date.weekday() >= 5: # Weekend (Sat/Sun)
-            lst = config["weekendTimeSlots"]
-        else:
-            lst = config["weekdayTimeSlots"]
-
-        for timeSlotDict in lst:
-            timeSlot = TimeSlot.fromDict(timeSlotDict, temporary=True) # These automatic TimeSlots are NOT persisted
-            try:
-                day.addTimeSlot(timeSlot)
-            except ValueError:
-                if timeSlot in day.timeSlots:
-                    pass # Already added
-                else:
-                    print(f"WARNING: Default TimeSlot {timeSlot} could not be added to {day}")
+        initDay(day, config)
 
     return days
+
+
+def initDay(day: Day, config: {}):
+    if day.special:  # No defaults are applied
+        return
+        
+    if day.date.weekday() >= 5: # Weekend (Sat/Sun)
+        lst = config["weekendTimeSlots"]
+    else:
+        lst = config["weekdayTimeSlots"]
+
+    for timeSlotDict in lst:
+        timeSlot = TimeSlot.fromDict(timeSlotDict, temporary=True) # These automatic TimeSlots are NOT persisted
+        try:
+            day.addTimeSlot(timeSlot)
+        except ValueError:
+            if timeSlot in day.timeSlots:
+                pass # Already added
+            else:
+                print(f"WARNING: Default TimeSlot {timeSlot} could not be added to {day}")
+
 
 def initConfig() -> {}:
     config = load("config")
