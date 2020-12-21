@@ -12,9 +12,11 @@ class Day(Comparable):
         appointments = [Appointment.fromDict(appDict) for appDict in valueDict["appointments"]]
         return Day(parsedDate, timeSlots, appointments)
 
-    def __init__(self, date: date, timeSlots: [TimeSlot], appointments: [Appointment]):
+    def __init__(self, date: date, timeSlots: [TimeSlot], appointments: [Appointment]): # Remember: don't use mutables as default params
         self.date = date
-        self.timeSlots = timeSlots
+        self.timeSlots = []
+        for timeSlot in timeSlots:
+            self.addTimeSlot(timeSlot) # This validates that there are no overlapping timeslots
         self.appointments = appointments
     
     @property
@@ -33,6 +35,22 @@ class Day(Comparable):
     def dateString(self):
         return util.dateString(self.date)
 
+    def freeTimeSlots(self) -> [TimeSlot]: # Returns a new list containing new objects / copies
+        freeSlots = []
+        for timeSlot in self.timeSlots:
+            currentTimeSlots = [timeSlot.copy()]
+            for appointment in self.appointments:
+                newTimeSlots = []
+                for currentTimeSlot in currentTimeSlots:
+                    newTimeSlots += currentTimeSlot.nonOverlap(appointment.timeSlot)
+                currentTimeSlots = newTimeSlots.copy() # .copy() is very important; mutation danger
+            freeSlots += currentTimeSlots.copy()
+        return freeSlots
+
+    def freeTimeInMinutes(self) -> int: # Later on this should take a PRIORITY as well and override appointments with lower prio
+        freeSlots = self.freeTimeSlots()
+        return sum([timeSlot.timeInMinutes() for timeSlot in freeSlots])
+
     def timeInMinutes(self) -> int:
         return sum([timeSlot.timeInMinutes() for timeSlot in self.timeSlots])
 
@@ -43,6 +61,13 @@ class Day(Comparable):
                 print(f"WARNING: Added appointment overlaps with '{existingAppointment}'")
 
         self.appointments.append(appointment)
+
+    def addTimeSlot(self, timeslot: TimeSlot):
+        for existingTimeSlot in self.timeSlots:
+            if existingTimeSlot.overlaps(timeslot):
+                raise ValueError("TimeSlots may not overlap!")
+
+        self.timeSlots.append(timeslot)
 
     def export(self) -> dict:
         return {
