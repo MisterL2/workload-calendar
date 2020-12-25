@@ -56,7 +56,15 @@ def addTask():
         valid = False
         while not valid:
             try:
-                timeRequirement = float(input("How much time does this task require (hours)? ")) * 60
+                minTime = float(input("How much time does this task require AT LEAST (hours)? ")) * 60
+                valid = True
+            except ValueError:
+                print("Please return a valid number! Decimals are separated by '.', not ','!")
+
+        valid = False
+        while not valid:
+            try:
+                maxTime = float(input("How much time does this task require AT MOST (hours)? ")) * 60
                 valid = True
             except ValueError:
                 print("Please return a valid number! Decimals are separated by '.', not ','!")
@@ -69,9 +77,9 @@ def addTask():
         time = timeInput("Please enter the TIME (HH:MM) of the deadline: ")
         deadline = deadline.shift(hours=time.hours, minutes=time.minutes)
 
-        minBlock = intput("What is the smallest block size that this task can be split up into (minutes)? ","Invalid time! Please enter a valid whole number.")
+        minBlock = intput("What is the smallest block size that this task can be split up into (minutes)? ", "Invalid time! Please enter a valid whole number.")
         deadline = util.dateString(deadline, time=True)
-        task = Task(name, timeRequirement, priority, deadline, minBlock)
+        task = Task(name, minTime, maxTime, priority, deadline, minBlock)
         tasks.append(task)
         
         print("Task added successfully!")

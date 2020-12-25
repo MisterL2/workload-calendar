@@ -11,10 +11,23 @@ tasks:
 -> requires (other task(s) that needs to be done beforehand)
 -> priority
 
+buffer = max_workload - min_workload
+-> buffer for every task at half the task priority
+
 The algorithm then goes backwards from the deadline, starting with the buffer (max_workload - min_workload) and then the work time. Then takes a look at that task's requirements and tries to schedule them in.
-Algorithm needs to give priorities accordingly and find the best possible schedule. Given the known info about to-do tasks, it will then display the current day's schedule. If the day's schedule isn't full (because there is still some spare time to complete other tasks), then the closest tasks (time-wise) should be pulled forwards.
+Algorithm needs to give priorities accordingly and find the best possible schedule. Given the known info about to-do tasks, it will then display the current day's schedule. If the day's schedule isn't full (because there is still some spare time to complete other tasks), then the closest tasks (time-wise) should be pulled forwards (priority?).
 
 Ability to add in normal calendar appointments for fixed appointments, that are shown in the daily schedule as they would in a calendar, and have to be scheduled around.
 
 Ability to add/remove workload to tasks after creating them (with validation for >0)
 Ability to change deadlines for tasks after creating them (with validation for compatibility with previous tasks)
+
+Ability to finish off a task and regenerate on the spot (mid-day)
+i.e. user finishes Task A at 15:47, but that task has a few more hours and buffer planned.
+He should then mark that as completed and the application should then do the following:
+-> Detect the current time in the user's local timezone
+-> Round that time up to the next 30min interval
+-> Remove the Task A from the to-do incl. its buffer
+-> Maintain all past tasks for the current day until the next interval (in this case 16:00). (Keep in mind that this may be outside of a timeslot)
+-> Replan future schedule with the changed to-do list, starting with the next interval (16:00 on current day, in this case). Keep in mind that this value might be outside a timeslot.
+tl;dr Keep everything before 16:00 the same, everything after may change according to the next algorithm
