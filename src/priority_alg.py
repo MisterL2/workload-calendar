@@ -1,4 +1,5 @@
 from task import Task
+from day import Day
 
 def getValueFromPriority(priority: float) -> float:
     return (0.0285 * priority**3) - (0.2668 * priority**2) + (1.4123 * priority) - 0.2978

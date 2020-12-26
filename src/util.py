@@ -22,3 +22,16 @@ def dateTimeStringToArrow(dateString: str) -> arrow.Arrow:
 
 def dateStringToArrow(dateString: str) -> arrow.Arrow:
     return arrow.get(dateString,"DD.MM.YYYY")
+
+def smoothCurrentArrow():
+    currentArrow = arrow.now()
+    currentArrow.seconds = 0
+    currentArrow.microsecond = 0
+
+    if currentArrow.minutes >= 30:
+        currentArrow.hours += 1
+        currentArrow.minutes = 0
+    else:
+        currentArrow.minutes = 30
+
+    return currentArrow

@@ -3,6 +3,7 @@ import util
 from timeslot import TimeSlot
 from comparable import Comparable
 from appointment import Appointment
+from customtime import Time
 
 class Day(Comparable):
     @staticmethod
@@ -37,11 +38,23 @@ class Day(Comparable):
     def dateString(self):
         return util.dateString(self.date)
 
-    def freeTimeSlots(self) -> [TimeSlot]: # Returns a new list containing new objects / copies
+    def freeTimeSlots(self, before=None, after=None) -> [TimeSlot]: # Returns a new list containing new objects / copies
+        # At this point, priority could be used to determine if appointments should get thrown out
+        blocking_appointments = self.appointments.copy()
+        virtualAppointments = [] # Blocking appointments to simulate some constraint, i.e. after/before
+        if before is not None:
+            before = Appointment("VIRTUAL_APP_BEFORE", TimeSlot(before, Time(23, 59)))
+            virtualAppointments.append(before)
+        if after is not None:
+            after = Appointment("VIRTUAL_APP_AFTER", TimeSlot(Time(0, 0), after))
+            virtualAppointments.append(after)
+
+        blocking_appointments += virtualAppointments
+
         freeSlots = []
         for timeSlot in self.timeSlots:
             currentTimeSlots = [timeSlot.copy()]
-            for appointment in self.appointments:
+            for appointment in blocking_appointments:
                 newTimeSlots = []
                 for currentTimeSlot in currentTimeSlots:
                     newTimeSlots += currentTimeSlot.nonOverlap(appointment.timeSlot)
@@ -49,8 +62,8 @@ class Day(Comparable):
             freeSlots += currentTimeSlots.copy()
         return freeSlots
 
-    def freeTimeInMinutes(self) -> int: # Later on this should take a PRIORITY as well and override appointments with lower prio
-        freeSlots = self.freeTimeSlots()
+    def freeTimeInMinutes(self, before=None, after=None) -> int: # Later on this should take a PRIORITY as well and override appointments with lower prio
+        freeSlots = self.freeTimeSlots(before=before, after=after)
         return sum([timeSlot.timeInMinutes() for timeSlot in freeSlots])
 
     def timeInMinutes(self) -> int:

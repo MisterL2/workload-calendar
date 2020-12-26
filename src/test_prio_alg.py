@@ -1,6 +1,6 @@
 from unittest import TestCase
 from task import Task
-from algorithm import *
+from priority_alg import *
 import arrow
 
 farAwayDeadline = arrow.get("01.01.2099 23:59", "DD.MM.YYYY HH:mm")
@@ -83,5 +83,7 @@ class AlgTest(TestCase):
                 else:
                     raise Exception(f"Invalid value for 'correctTask': {correctTask}")
 
-
         self.assertEqual(missingTests, 0, f"Not all tests for this category were implemented yet. {len(testParameterDictLst) - missingTests}/{len(testParameterDictLst)} Tests implemented")
+
+
+        
