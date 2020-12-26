@@ -1,4 +1,6 @@
 from customtime import Time
+from timeslot import TimeSlot
+from day import Day
 import arrow
 
 def dateString(datetime, time=False):
@@ -25,13 +27,16 @@ def dateStringToArrow(dateString: str) -> arrow.Arrow:
 
 def smoothCurrentArrow():
     currentArrow = arrow.now()
-    currentArrow.seconds = 0
+    currentArrow.second = 0
     currentArrow.microsecond = 0
 
-    if currentArrow.minutes >= 30:
-        currentArrow.hours += 1
-        currentArrow.minutes = 0
+    if currentArrow.minute >= 30:
+        currentArrow.hour += 1
+        currentArrow.minute = 0
     else:
-        currentArrow.minutes = 30
+        currentArrow.minute = 30
 
     return currentArrow
+
+def exampleTimeSlots() -> [TimeSlot]:
+    return [TimeSlot(Time(8, 30), Time(12, 30)), TimeSlot(Time(13, 00), Time(17, 00))]

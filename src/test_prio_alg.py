@@ -26,42 +26,42 @@ class AlgTest(TestCase):
 
     def test_B(self):
         testParameterDictLst = [
-            {"name": "B0.1", "prio1" :2, "prio2": 9, "progress": 9, "correctTask": 2},
-            {"name": "B0.2", "prio1" :3, "prio2": 8, "progress": 9, "correctTask": 1},
-            {"name": "B0.3", "prio1" :4, "prio2": 7, "progress": 9, "correctTask": 1},
-            {"name": "B0.4", "prio1" :5, "prio2": 6, "progress": 9, "correctTask": 1},
-            {"name": "B1.1", "prio1" :2, "prio2": 9, "progress": 8, "correctTask": 2},
-            {"name": "B1.2", "prio1" :3, "prio2": 8, "progress": 8, "correctTask": 1},
-            {"name": "B1.3", "prio1" :4, "prio2": 7, "progress": 8, "correctTask": 1},
-            {"name": "B1.4", "prio1" :5, "prio2": 6, "progress": 8, "correctTask": 1},
-            {"name": "B2.1", "prio1" :2, "prio2": 9, "progress": 7, "correctTask": "TBD"},
-            {"name": "B2.2", "prio1" :3, "prio2": 8, "progress": 7, "correctTask": "TBD"},
-            {"name": "B2.3", "prio1" :4, "prio2": 7, "progress": 7, "correctTask": 1},
-            {"name": "B2.4", "prio1" :5, "prio2": 6, "progress": 7, "correctTask": 1},
-            {"name": "B3.1", "prio1" :2, "prio2": 9, "progress": 6, "correctTask": "TBD"},
-            {"name": "B3.2", "prio1" :3, "prio2": 8, "progress": 6, "correctTask": "TBD"},
-            {"name": "B3.3", "prio1" :4, "prio2": 7, "progress": 6, "correctTask": 1},
-            {"name": "B3.4", "prio1" :5, "prio2": 6, "progress": 6, "correctTask": 1},
-            {"name": "B4.1", "prio1" :2, "prio2": 9, "progress": 5, "correctTask": 2},
-            {"name": "B4.2", "prio1" :3, "prio2": 8, "progress": 5, "correctTask": "TBD"},
-            {"name": "B4.3", "prio1" :4, "prio2": 7, "progress": 5, "correctTask": "TBD"},
-            {"name": "B4.4", "prio1" :5, "prio2": 6, "progress": 5, "correctTask": 1},
-            {"name": "B5.1", "prio1" :2, "prio2": 9, "progress": 4, "correctTask": 2},
-            {"name": "B5.2", "prio1" :3, "prio2": 8, "progress": 4, "correctTask": "TBD"},
-            {"name": "B5.3", "prio1" :4, "prio2": 7, "progress": 4, "correctTask": "TBD"},
-            {"name": "B5.4", "prio1" :5, "prio2": 6, "progress": 4, "correctTask": 1},
-            {"name": "B6.1", "prio1" :2, "prio2": 9, "progress": 3, "correctTask": 2},
-            {"name": "B6.2", "prio1" :3, "prio2": 8, "progress": 3, "correctTask": "TBD"},
-            {"name": "B6.3", "prio1" :4, "prio2": 7, "progress": 3, "correctTask": "TBD"},
-            {"name": "B6.4", "prio1" :5, "prio2": 6, "progress": 3, "correctTask": "TBD"},
-            {"name": "B7.1", "prio1" :2, "prio2": 9, "progress": 2, "correctTask": 2},
-            {"name": "B7.2", "prio1" :3, "prio2": 8, "progress": 2, "correctTask": 2},
-            {"name": "B7.3", "prio1" :4, "prio2": 7, "progress": 2, "correctTask": "TBD"},
-            {"name": "B7.4", "prio1" :5, "prio2": 6, "progress": 2, "correctTask": "TBD"},
-            {"name": "B8.1", "prio1" :2, "prio2": 9, "progress": 1, "correctTask": 2},
-            {"name": "B8.2", "prio1" :3, "prio2": 8, "progress": 1, "correctTask": 2},
-            {"name": "B8.3", "prio1" :4, "prio2": 7, "progress": 1, "correctTask": 2},
-            {"name": "B8.4", "prio1" :5, "prio2": 6, "progress": 1, "correctTask": "TBD"},
+            {"name": "B0.1", "prio1" :2, "prio2": 9, "progress": 0.9, "correctTask": 1},
+            {"name": "B0.2", "prio1" :3, "prio2": 8, "progress": 0.9, "correctTask": 1},
+            {"name": "B0.3", "prio1" :4, "prio2": 7, "progress": 0.9, "correctTask": 1},
+            {"name": "B0.4", "prio1" :5, "prio2": 6, "progress": 0.9, "correctTask": 1},
+            {"name": "B1.1", "prio1" :2, "prio2": 9, "progress": 0.8, "correctTask": 2},
+            {"name": "B1.2", "prio1" :3, "prio2": 8, "progress": 0.8, "correctTask": 1},
+            {"name": "B1.3", "prio1" :4, "prio2": 7, "progress": 0.8, "correctTask": 1},
+            {"name": "B1.4", "prio1" :5, "prio2": 6, "progress": 0.8, "correctTask": 1},
+            {"name": "B2.1", "prio1" :2, "prio2": 9, "progress": 0.7, "correctTask": 2},
+            {"name": "B2.2", "prio1" :3, "prio2": 8, "progress": 0.7, "correctTask": 2},
+            {"name": "B2.3", "prio1" :4, "prio2": 7, "progress": 0.7, "correctTask": 1},
+            {"name": "B2.4", "prio1" :5, "prio2": 6, "progress": 0.7, "correctTask": 1},
+            {"name": "B3.1", "prio1" :2, "prio2": 9, "progress": 0.6, "correctTask": 2},
+            {"name": "B3.2", "prio1" :3, "prio2": 8, "progress": 0.6, "correctTask": 2},
+            {"name": "B3.3", "prio1" :4, "prio2": 7, "progress": 0.6, "correctTask": 2},
+            {"name": "B3.4", "prio1" :5, "prio2": 6, "progress": 0.6, "correctTask": 1},
+            {"name": "B4.1", "prio1" :2, "prio2": 9, "progress": 0.5, "correctTask": 2},
+            {"name": "B4.2", "prio1" :3, "prio2": 8, "progress": 0.5, "correctTask": 2},
+            {"name": "B4.3", "prio1" :4, "prio2": 7, "progress": 0.5, "correctTask": 2},
+            {"name": "B4.4", "prio1" :5, "prio2": 6, "progress": 0.5, "correctTask": 1},
+            {"name": "B5.1", "prio1" :2, "prio2": 9, "progress": 0.4, "correctTask": 2},
+            {"name": "B5.2", "prio1" :3, "prio2": 8, "progress": 0.4, "correctTask": 2},
+            {"name": "B5.3", "prio1" :4, "prio2": 7, "progress": 0.4, "correctTask": 2},
+            {"name": "B5.4", "prio1" :5, "prio2": 6, "progress": 0.4, "correctTask": 1},
+            {"name": "B6.1", "prio1" :2, "prio2": 9, "progress": 0.3, "correctTask": 2},
+            {"name": "B6.2", "prio1" :3, "prio2": 8, "progress": 0.3, "correctTask": 2},
+            {"name": "B6.3", "prio1" :4, "prio2": 7, "progress": 0.3, "correctTask": 2},
+            {"name": "B6.4", "prio1" :5, "prio2": 6, "progress": 0.3, "correctTask": 1},
+            {"name": "B7.1", "prio1" :2, "prio2": 9, "progress": 0.2, "correctTask": 2},
+            {"name": "B7.2", "prio1" :3, "prio2": 8, "progress": 0.2, "correctTask": 2},
+            {"name": "B7.3", "prio1" :4, "prio2": 7, "progress": 0.2, "correctTask": 2},
+            {"name": "B7.4", "prio1" :5, "prio2": 6, "progress": 0.2, "correctTask": 2},
+            {"name": "B8.1", "prio1" :2, "prio2": 9, "progress": 0.1, "correctTask": 2},
+            {"name": "B8.2", "prio1" :3, "prio2": 8, "progress": 0.1, "correctTask": 2},
+            {"name": "B8.3", "prio1" :4, "prio2": 7, "progress": 0.1, "correctTask": 2},
+            {"name": "B8.4", "prio1" :5, "prio2": 6, "progress": 0.1, "correctTask": 2},
         ]
         missingTests = 0
         for testParamDict in testParameterDictLst:
@@ -71,15 +71,16 @@ class AlgTest(TestCase):
                     continue # Test not finished yet
 
                 task1 = Task("Task #1", 10, 10, testParamDict["prio1"], farAwayDeadline, 30)
-                task1.updateValue("completedTime", testParamDict["progress"]) # Using this command to avoid the user-prompt ("Did you complete the task?")
+                task1.updateValue("completedTime", 10 * testParamDict["progress"]) # Using this command to avoid the user-prompt ("Did you complete the task?")
                 task2 = Task("Task #2", 10, 10, testParamDict["prio2"], farAwayDeadline, 30)
 
                 chosenTask = prioritiseTaskHappy(task1, task2)
                 correctTask = testParamDict["correctTask"]
+                progressPercentage = f"{testParamDict['progress']*100:3}%"
                 if correctTask == 1:
-                    self.assertEqual(task1, chosenTask)
+                    self.assertEqual(task1, chosenTask, f"\nShould have selected Task #1 (prio: {testParamDict['prio1']}, progress: {progressPercentage}) instead of Task #1 (prio: {testParamDict['prio2']}, progress: 0%)")
                 elif correctTask == 2:
-                    self.assertEqual(task2, chosenTask)
+                    self.assertEqual(task2, chosenTask, f"\nShould have selected Task #2 (prio: {testParamDict['prio2']}, progress: 0%) instead of Task #1 (prio: {testParamDict['prio1']}, progress: {progressPercentage})")
                 else:
                     raise Exception(f"Invalid value for 'correctTask': {correctTask}")
 

@@ -15,12 +15,13 @@ class Day(Comparable):
         return Day(parsedDate, timeSlots, appointments, special=isSpecial)
 
     def __init__(self, date: date, timeSlots: [TimeSlot], appointments: [Appointment], special=False): # Remember: don't use mutables as default params
+        self.special = special
         self.date = date
         self.timeSlots = []
+        self.appointments = appointments
+        
         for timeSlot in timeSlots:
             self.addTimeSlot(timeSlot) # This validates that there are no overlapping timeslots
-        self.appointments = appointments
-        self.special = special
     
     @property
     def month(self):
@@ -42,10 +43,10 @@ class Day(Comparable):
         # At this point, priority could be used to determine if appointments should get thrown out
         blocking_appointments = self.appointments.copy()
         virtualAppointments = [] # Blocking appointments to simulate some constraint, i.e. after/before
-        if before is not None:
+        if before is not None and before != Time(23, 59):
             before = Appointment("VIRTUAL_APP_BEFORE", TimeSlot(before, Time(23, 59)))
             virtualAppointments.append(before)
-        if after is not None:
+        if after is not None and after != Time(0, 0):
             after = Appointment("VIRTUAL_APP_AFTER", TimeSlot(Time(0, 0), after))
             virtualAppointments.append(after)
 
@@ -89,7 +90,10 @@ class Day(Comparable):
             if existingTimeSlot.overlaps(timeslot):
                 raise ValueError("TimeSlots may not overlap!")
 
-        self.timeSlots.append(timeslot)
+        if self.special and timeslot.temporary:
+            print("WARNING: Trying to add temporary timeslot to special day")
+        else:
+            self.timeSlots.append(timeslot)
 
     def markSpecial(self):
         self.special = True

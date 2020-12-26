@@ -7,13 +7,13 @@ class Task:
         deadlineArrow = util.dateTimeStringToArrow(valueDict["deadline"])
         return Task(valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"])
 
-    def __init__(self, name: str, minTime: int, maxTime: int, priority: int, deadline: Arrow, minBlock: int):
+    def __init__(self, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int):
         self.__deadlineArrow = deadline
         self.__data = {
             "name" : name,
             "completedTime" : 0,
-            "minTime" : minTime, # In Minutes
-            "maxTime" : maxTime, # In Minutes
+            "minTime" : minTimeMinutes, # In Minutes
+            "maxTime" : maxTimeMinutes, # In Minutes
             "priority" : priority,
             "deadline" : util.dateString(deadline, time=True),
             "minBlock" : minBlock  # If this is 120, it means that this task should not be split up into chunks smaller than 120mins.
@@ -22,12 +22,12 @@ class Task:
     def updateValue(self, key, value):
         self.__data[key] = value
 
-    def addTaskTime(self, timeToAdd: int): # In Minutes
-        self.updateValue("minTime", timeToAdd + self.minTime)
-        self.updateValue("maxTime", timeToAdd + self.maxTime)
+    def addTimeRequirement(self, minutesToAdd: int): # Make the task longer
+        self.updateValue("minTime", minutesToAdd + self.minTime)
+        self.updateValue("maxTime", minutesToAdd + self.maxTime)
 
-    def addCompletionTime(self, timeToAdd: int): # In Minutes
-        self.updateValue("completedTime", timeToAdd + self.completedTime)
+    def addCompletionTime(self, minutesToAdd: int): # Increase progress
+        self.updateValue("completedTime", minutesToAdd + self.completedTime)
         if self.completedTime > self.maxTime:
             print("Exceeded MAXIMUM time, is the task finished? [Ask user for yes/no here]")
         elif self.completedTime > self.minTime:
@@ -38,11 +38,11 @@ class Task:
         return self.__data["name"]
 
     @property
-    def minTime(self) -> int:
+    def minTime(self) -> int: # In Minutes
         return self.__data["minTime"]
     
     @property
-    def maxTime(self) -> int:
+    def maxTime(self) -> int: # In Minutes
         return self.__data["maxTime"]
 
     @property

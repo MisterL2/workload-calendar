@@ -5,7 +5,9 @@ from typing import Union
 from customtime import Time
 import util
 
-def isSolvable(tasks: [Task], days: [Day], start: Arrow, useMinimum=False) -> bool:
+def isSolvable(tasks: [Task], days: [Day], start: Arrow, useMinimum=False, debug=False) -> bool:
+    if (util.smoothCurrentArrow() > start):
+        raise Exception("Cannot solve an algorithm for the past")
     # TO DO - Incorporate current day / time as lower minimum!
     sortedTasks = sorted(tasks, key=lambda task: task.deadline)
     sortedDays = sorted(days, key=lambda day: day.date)
@@ -17,10 +19,14 @@ def isSolvable(tasks: [Task], days: [Day], start: Arrow, useMinimum=False) -> bo
         nextDeadline = task.deadline
 
         # On the first iteration (Note: This considers appointments to have absolute priority currently)
-        currentFreeTime = getFreeTimeBetweenPoints(days, currentTaskDeadline, nextDeadline)
+        currentFreeTime = getFreeTimeBetweenPoints(sortedDays, currentTaskDeadline, nextDeadline)
         
-        currentCumulativeWorkload += task.maxTime()
+        currentCumulativeWorkload += task.maxRemainingTime
         currentCumulativeFreeTime += currentFreeTime
+
+        if debug:
+            print(f"cCWorkload: {currentCumulativeWorkload}")
+            print(f"cCFreeTime: {currentCumulativeFreeTime}")
 
         if currentCumulativeWorkload > currentCumulativeFreeTime:
             return False # In these cases, it is not possible to meet all deadlines
