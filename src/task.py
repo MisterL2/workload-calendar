@@ -1,4 +1,5 @@
 from arrow import Arrow
+from typing import Union
 import util
 
 class Task:
@@ -7,7 +8,7 @@ class Task:
         deadlineArrow = util.dateTimeStringToArrow(valueDict["deadline"])
         return Task(valueDict["uuid"], valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"])
 
-    def __init__(self, uuid: int, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int):
+    def __init__(self, uuid: str, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int):
         self.__deadlineArrow = deadline
         self.__data = {
             "uuid": uuid,
@@ -16,7 +17,7 @@ class Task:
             "minTime" : minTimeMinutes, # In Minutes
             "maxTime" : maxTimeMinutes, # In Minutes
             "priority" : priority,
-            "deadline" : util.dateString(deadline, time=True),
+            "deadline" : util.dateString(deadline, time=True) if deadline is not None else None,
             "minBlock" : minBlock  # If this is 120, it means that this task should not be split up into chunks smaller than 120mins.
         }
 
@@ -90,6 +91,9 @@ class Task:
     def progress(self):
         return self.completedTime / self.maxTime # For consistency reasons, use maxTime
 
+    def hasDeadline(self) -> bool:
+        return self.deadline is not None
+
     def export(self):
         return self.__data
 
@@ -98,3 +102,6 @@ class Task:
 
     def __repr__(self) -> str:
         return f"{self.name} ({round(self.minTime/60,1)} - {round(self.maxTime/60,1)} h) Priority: {self.priority}/10 Deadline: [{self.deadline}] Min Block Size: {self.minBlock} min"
+
+    def copy(self):
+        return Task.fromDict(self.export())

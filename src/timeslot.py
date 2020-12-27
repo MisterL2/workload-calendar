@@ -48,12 +48,11 @@ class TimeSlot(Comparable):
 
     def overlaps(self, other) -> bool:
         # Notation: self = [], other = {}
-        # ORDER OF SCENARIOS MATTERS
 
         # Scenario [{}] (also covers the case where they are EQUAL)
         if self.start <= other.start and other.end <= self.end: return True
 
-        # Scenario {[]}
+        # Scenario {[]} (also covers the case where they are EQUAL)
         if other.start <= self.start and self.end <= other.end: return True
 
         # Scenario [{]}
