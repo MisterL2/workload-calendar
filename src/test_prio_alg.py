@@ -2,23 +2,24 @@ from unittest import TestCase
 from task import Task
 from priority_alg import *
 import arrow
+import util
 
 farAwayDeadline = arrow.get("01.01.2099 23:59", "DD.MM.YYYY HH:mm")
 
 class AlgTest(TestCase):
     def test_basic(self):
-        task1 = Task("Task #1", 10, 10, 2, farAwayDeadline, 30)
-        task2 = Task("Task #2", 10, 10, 3, farAwayDeadline, 30)
+        task1 = Task(util.generateUUID(), "Task #1", 10, 10, 2, farAwayDeadline, 30)
+        task2 = Task(util.generateUUID(), "Task #2", 10, 10, 3, farAwayDeadline, 30)
         
         self.assertEqual(task2, prioritiseTaskHappy(task1, task2))
 
-        task3 = Task("Task #3", 10, 10, 8, farAwayDeadline, 30)
-        task4 = Task("Task #4", 10, 10, 6, farAwayDeadline, 30)
+        task3 = Task(util.generateUUID(), "Task #3", 10, 10, 8, farAwayDeadline, 30)
+        task4 = Task(util.generateUUID(), "Task #4", 10, 10, 6, farAwayDeadline, 30)
         
         self.assertEqual(task3, prioritiseTaskHappy(task3, task4))
 
-        task5 = Task("Task #5", 10, 10, 7, farAwayDeadline, 30)
-        task6 = Task("Task #6", 10, 10, 7, farAwayDeadline, 30)
+        task5 = Task(util.generateUUID(), "Task #5", 10, 10, 7, farAwayDeadline, 30)
+        task6 = Task(util.generateUUID(), "Task #6", 10, 10, 7, farAwayDeadline, 30)
         
         # When they are equal, the "larger" name should get selected
         self.assertEqual(task6, prioritiseTaskHappy(task5, task6))
@@ -70,9 +71,9 @@ class AlgTest(TestCase):
                     missingTests += 1
                     continue # Test not finished yet
 
-                task1 = Task("Task #1", 10, 10, testParamDict["prio1"], farAwayDeadline, 30)
+                task1 = Task(util.generateUUID(), "Task #1", 10, 10, testParamDict["prio1"], farAwayDeadline, 30)
                 task1.updateValue("completedTime", 10 * testParamDict["progress"]) # Using this command to avoid the user-prompt ("Did you complete the task?")
-                task2 = Task("Task #2", 10, 10, testParamDict["prio2"], farAwayDeadline, 30)
+                task2 = Task(util.generateUUID(), "Task #2", 10, 10, testParamDict["prio2"], farAwayDeadline, 30)
 
                 chosenTask = prioritiseTaskHappy(task1, task2)
                 correctTask = testParamDict["correctTask"]

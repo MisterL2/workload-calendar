@@ -58,7 +58,7 @@ class ScheduleTest(TestCase):
             with self.subTest(name=paramDict["name"]):
                 tasks = []
                 for taskDict in paramDict["tasks"]:
-                    task = Task("Task #1", taskDict["time"], taskDict["time"], taskDict["priority"], deadline, 0)
+                    task = Task(util.generateUUID(), "Task #1", taskDict["time"], taskDict["time"], taskDict["priority"], deadline, 0)
                     task.addCompletionTime(taskDict["progress"] * taskDict["time"])
                     tasks.append(task)
                 

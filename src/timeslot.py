@@ -2,7 +2,6 @@ from datetime import timedelta
 from customtime import Time
 from comparable import Comparable
 import util
-from task import Task
 
 class TimeSlot(Comparable):
     @staticmethod
@@ -56,10 +55,10 @@ class TimeSlot(Comparable):
         if other.start <= self.start and self.end <= other.end: return True
 
         # Scenario [{]}
-        if self.start <= other.start and other.start <= self.end: return True
+        if self.start <= other.start and other.start < self.end: return True
 
         # Scenario {[}]
-        if other.start <= self.start and self.start <= other.end: return True
+        if other.start <= self.start and self.start < other.end: return True
 
         # If no scenario matches
         return False
@@ -83,14 +82,14 @@ class TimeSlot(Comparable):
             return []
 
         # Scenario [{]}
-        if self.start <= other.start and other.start <= self.end:
+        if self.start <= other.start and other.start < self.end:
             lst = []
             if self.start != other.start: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
                 lst.append(TimeSlot(self.__start, other.__start))
             return lst
 
         # Scenario {[}]
-        if other.start <= self.start and self.start <= other.end:
+        if other.start <= self.start and self.start < other.end:
             lst = []
             if other.end != self.end: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
                 lst.append(TimeSlot(other.__end, self.__end))
