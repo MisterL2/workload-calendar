@@ -1,6 +1,6 @@
 from customtime import Time
 from timeslot import TimeSlot
-from day import Day
+import uuid
 import arrow
 
 def dateString(datetime, time=False):
@@ -40,3 +40,6 @@ def smoothCurrentArrow():
 
 def exampleTimeSlots() -> [TimeSlot]:
     return [TimeSlot(Time(8, 30), Time(12, 30)), TimeSlot(Time(13, 00), Time(17, 00))]
+
+def generateUUID() -> str:
+    return str(uuid.uuid4())

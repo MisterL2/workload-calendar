@@ -2,6 +2,10 @@ from comparable import Comparable
 
 class Time(Comparable):
     @staticmethod
+    def fromMinutes(minutes: int):
+        return Time(minutes // 60, minutes % 60)
+
+    @staticmethod
     def fromString(timeString: str):
         hours = int(timeString.split(":")[0])
         minutes = int(timeString.split(":")[1])

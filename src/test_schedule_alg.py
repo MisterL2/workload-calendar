@@ -68,7 +68,3 @@ class ScheduleTest(TestCase):
                 result = schedule_alg.isSolvable(tasks, days, arrow.Arrow.fromdate(days[0].date), debug=debug)
                 self.assertEqual(result, paramDict["solution"])
 
-
-
-    def test_isSolvableMinimum(self):
-        pass

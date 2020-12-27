@@ -21,7 +21,10 @@ def isSolvable(tasks: [Task], days: [Day], start: Arrow, useMinimum=False, debug
         # On the first iteration (Note: This considers appointments to have absolute priority currently)
         currentFreeTime = getFreeTimeBetweenPoints(sortedDays, currentTaskDeadline, nextDeadline)
         
-        currentCumulativeWorkload += task.maxRemainingTime
+        if useMinimum:
+            currentCumulativeWorkload += task.minRemainingTime
+        else:
+            currentCumulativeWorkload += task.maxRemainingTime
         currentCumulativeFreeTime += currentFreeTime
 
         if debug:
@@ -69,4 +72,4 @@ def getFreeTimeBetweenPoints(sortedDays: [Day], start: Arrow, end: Arrow) -> int
     return freeMinutes
 
 
-
+def calculateSchedule(tasks: [Task], days: [Day], start: Arrow):

@@ -5,11 +5,12 @@ class Task:
     @staticmethod
     def fromDict(valueDict: dict):
         deadlineArrow = util.dateTimeStringToArrow(valueDict["deadline"])
-        return Task(valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"])
+        return Task(valueDict["uuid"], valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"])
 
-    def __init__(self, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int):
+    def __init__(self, uuid: int, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int):
         self.__deadlineArrow = deadline
         self.__data = {
+            "uuid": uuid,
             "name" : name,
             "completedTime" : 0,
             "minTime" : minTimeMinutes, # In Minutes
@@ -32,6 +33,10 @@ class Task:
             print("Exceeded MAXIMUM time, is the task finished? [Ask user for yes/no here]")
         elif self.completedTime > self.minTime:
             print("Exceeded minimum time, is the task finished? [Ask user for yes/no here]")
+
+    @property
+    def uuid(self) -> str:
+        return self.__data["uuid"]
 
     @property
     def name(self) -> str:
@@ -91,5 +96,5 @@ class Task:
     def fitsIn(self, timeslot):
         return timeslot.timeInMinutes() >= self.minBlock
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.name} ({round(self.minTime/60,1)} - {round(self.maxTime/60,1)} h) Priority: {self.priority}/10 Deadline: [{self.deadline}] Min Block Size: {self.minBlock} min"

@@ -79,7 +79,7 @@ def addTask():
 
         minBlock = intput("What is the smallest block size that this task can be split up into (minutes)? ", "Invalid time! Please enter a valid whole number.")
         deadline = util.dateString(deadline, time=True)
-        task = Task(name, minTime, maxTime, priority, deadline, minBlock)
+        task = Task(util.generateUUID(), name, minTime, maxTime, priority, deadline, minBlock)
         tasks.append(task)
         
         print("Task added successfully!")

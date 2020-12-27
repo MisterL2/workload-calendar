@@ -45,12 +45,12 @@ def initDays(config: {}) -> [Day]:
     currentDate = arrow.get(startDate)
     for _ in range(daysToCreate): # Fill up days to get up to dayCount
         currentDate = currentDate.shift(days=1)
-        newDay = Day(currentDate, [], []) # TODO add actual timeslots for the day based on config default for that weekday
+        newDay = Day(currentDate, [], [])
         days.append(newDay)
 
     # Load config-TimeSlots onto days if they don't exist already
     for day in days:
-        initDay(day, config)
+        initDay(day, config) # Adds temporary timeslots based on config
 
     return days
 

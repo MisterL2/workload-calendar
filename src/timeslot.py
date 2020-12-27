@@ -2,11 +2,12 @@ from datetime import timedelta
 from customtime import Time
 from comparable import Comparable
 import util
+from task import Task
 
 class TimeSlot(Comparable):
     @staticmethod
     def fromString(timeslotString: str, temporary=False):
-        start, end = timeslotString.split(" - ")
+        start, end = timeslotString.split(" - ", 1)
         return TimeSlot(util.timeParse(start), util.timeParse(end), temporary=temporary)
 
     @staticmethod
