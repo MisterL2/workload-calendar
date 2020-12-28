@@ -1,5 +1,6 @@
 from arrow import Arrow
 from typing import Union
+import uuid
 import util
 
 class Task:
@@ -39,6 +40,10 @@ class Task:
     @property
     def uuid(self) -> str:
         return self.__data["uuid"]
+
+    @property
+    def uuidInt(self) -> int:
+        return uuid.UUID(str(self.uuid)).int
 
     @property
     def name(self) -> str:
@@ -102,7 +107,13 @@ class Task:
         return timeslot.timeInMinutes() >= self.minBlock
 
     def __repr__(self) -> str:
-        return f"{self.name} ({round(self.minTime/60,1)} - {round(self.maxTime/60,1)} h) Priority: {self.priority}/10 Deadline: [{self.deadline}] Min Block Size: {self.minBlock} min"
+        return f"{self.name} ({round(self.minTime/60,1)} h - {round(self.maxTime/60,1)} h) Priority: {self.priority}/10 Deadline: [{self.deadline}] Min Block Size: {self.minBlock} min"
+
+    def __eq__(self, other) -> bool:
+        return self.uuid == other.uuid
+
+    def __hash__(self) -> int:
+        return self.uuidInt
 
     def copy(self):
         return Task.fromDict(self.export())

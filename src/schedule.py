@@ -2,6 +2,8 @@ from day import Day
 from week import Week
 from datetime import date
 from task import Task
+from timeslot import TimeSlot
+from customtime import Time
 import util
 
 class Schedule():
@@ -27,7 +29,7 @@ class Schedule():
         # If, while going back, you meet the current date/time, stop there and only display the week partially, starting from that date.
         pass
 
-    def scheduleTask(self, task: Task, minutes=None):
+    def scheduleTask(self, task: Task, minutes=None, debug=False):
         # TODO: Consider minBlock
 
         if minutes is None:
@@ -42,6 +44,9 @@ class Schedule():
         currentTime = util.arrowToTime(currentArrow)
 
         for day in self.__days:
+            if task.maxRemainingTime == 0 or minutesToSchedule == scheduledMinutes:
+                return
+
             # Skip days in the past
             if day.date < currentDate:
                 continue
@@ -60,18 +65,33 @@ class Schedule():
             # For the valid TimeSlots of the future, fill them with the task until they are either all filled or "minutesToSchedule" minutes are scheduled
             for ts in freeTimeSlots:
 
-                # If TimeSlot is smaller than what still needs to be scheduled, fill it completely
-                if ts.durationInMinutes < (minutesToSchedule - scheduledMinutes):
+                if task.maxRemainingTime == 0 or minutesToSchedule == scheduledMinutes:
+                    return
+
+                # If TimeSlot is <= to what still needs to be scheduled, fill it completely
+                if ts.durationInMinutes <= (minutesToSchedule - scheduledMinutes):
                     # Schedule the Task
-                    day.scheduleTask(ts, task)
+                    day.scheduleTask(ts, task, debug=debug)
 
                     # Update the counters
                     task.addCompletionTime(ts.durationInMinutes) # This mutates the ORIGINAL TASK
                     scheduledMinutes += ts.durationInMinutes
 
+                else: # If TimeSlot is bigger than what needs to be scheduled, fill the first section of it (until "minutesToSchedule" minutes are scheduled)
+                    # Build the Partial TimeSlot
+                    remainingMinutesToSchedule = minutesToSchedule - scheduledMinutes
+                    length = Time.fromMinutes(remainingMinutesToSchedule)
+                    partialTimeSlot = TimeSlot(ts.startTime, ts.startTime + length)
 
+                    # Schedule the Task
+                    day.scheduleTask(partialTimeSlot, task, debug=debug)
 
-            if task.maxRemainingTime == 0 or minutesToSchedule == scheduledMinutes:
-                return
-
+                    # Update the counters
+                    task.addCompletionTime(partialTimeSlot.durationInMinutes) # This mutates the ORIGINAL TASK
+                    scheduledMinutes += partialTimeSlot.durationInMinutes # Unnecessary. ScheduledMinutes will == MinutesToSchedule after this every time.
+                    return # Since the TimeSlot was bigger than the remaining minutesToSchedule, we are done here now.
         raise Exception("Unable to schedule task!")
+
+
+    def __repr__(self) -> str:
+        return f"Schedule ({self.__days[0].date} - {self.__days[-1].date})\n" + "\n".join([repr(day) for day in self.__days])

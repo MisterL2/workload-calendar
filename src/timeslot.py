@@ -6,6 +6,9 @@ import util
 class TimeSlot(Comparable):
     @staticmethod
     def fromString(timeslotString: str, temporary=False):
+        # This is not to be used for reimporting (as the __repr__ produces a different string)
+        # The only intended use for this method is to create a timeslot easily from a string literal, i.e. for testing
+        # fromDict should be used for imports
         start, end = timeslotString.split(" - ", 1)
         return TimeSlot(util.timeParse(start), util.timeParse(end), temporary=temporary)
 
@@ -20,49 +23,67 @@ class TimeSlot(Comparable):
         self.__end = end
         self.task = None # Not persisted
         self.temporary = temporary
-        if self.start >= self.end:
-            raise ValueError(f"Start date cannot be after the end date! {self.start} was before {self.end}")
+        if self.startTime > self.endTime:
+            raise ValueError(f"Start date cannot be after the end date! {self.startTime} was before {self.endTime}")
+        elif self.startTime == self.endTime:
+            raise ValueError(f"Start date cannot be equal to the end date! {self.startTime} was equal to {self.endTime}")
     
     @property
-    def start(self):
+    def startTimeString(self):
         return f"{self.__start.hours:02}:{self.__start.minutes:02}"
 
     @property
-    def end(self):
+    def startTime(self):
+        return self.__start
+
+    @property
+    def endTimeString(self):
         return f"{self.__end.hours:02}:{self.__end.minutes:02}"
+
+    @property
+    def endTime(self):
+        return self.__end
 
     def timeInMinutes(self) -> int:
         return (self.__end - self.__start).total_minutes()
 
+    @property
     def durationInMinutes(self) -> int:
         return self.timeInMinutes()
 
     def export(self) -> dict:
         return {
-            "startTime" : self.start,
-            "endTime" : self.end
+            "startTime" : self.startTimeString,
+            "endTime" : self.endTimeString
         }
 
     def __repr__(self) -> str:
-        return f"{self.start} - {self.end}"
+        if self.task is None:
+            return f"{self.startTimeString} - {self.endTimeString} <empty>"
+        else:
+            return f"{self.startTimeString} - {self.endTimeString} ({self.task.name})"
 
     def __eq__(self, other) -> bool:
-        return self.start == other.start and self.end == other.end
+        return self.startTime == other.startTime and self.endTime == other.endTime
 
     def overlaps(self, other) -> bool:
         # Notation: self = [], other = {}
 
         # Scenario [{}] (also covers the case where they are EQUAL)
-        if self.start <= other.start and other.end <= self.end: return True
+        if self.startTime <= other.startTime and other.endTime <= self.endTime:
+            return True
 
         # Scenario {[]} (also covers the case where they are EQUAL)
-        if other.start <= self.start and self.end <= other.end: return True
+        if other.startTime <= self.startTime and self.endTime <= other.endTime:
+            return True
 
         # Scenario [{]}
-        if self.start <= other.start and other.start < self.end: return True
+        if self.startTime <= other.startTime and other.startTime < self.endTime:
+            return True
 
         # Scenario {[}]
-        if other.start <= self.start and self.start < other.end: return True
+        if other.startTime <= self.startTime and self.startTime < other.endTime:
+            return True
 
         # If no scenario matches
         return False
@@ -73,36 +94,36 @@ class TimeSlot(Comparable):
         # ORDER OF SCENARIOS MATTERS
 
         # Scenario [{}] (also covers the case where they are EQUAL)
-        if self.start <= other.start and other.end <= self.end:
+        if self.startTime <= other.startTime and other.endTime <= self.endTime:
             lst = []
-            if self.start != other.start: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
-                lst.append(TimeSlot(self.__start, other.__start))
-            if self.end != other.end: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
-                lst.append(TimeSlot(other.__end, self.__end))
+            if self.startTime != other.startTime: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
+                lst.append(TimeSlot(self.startTime, other.startTime))
+            if self.endTime != other.endTime: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
+                lst.append(TimeSlot(other.endTime, self.endTime))
             return lst
 
         # Scenario {[]}
-        if other.start <= self.start and self.end <= other.end:
+        if other.startTime <= self.startTime and self.endTime <= other.endTime:
             return []
 
         # Scenario [{]}
-        if self.start <= other.start and other.start < self.end:
+        if self.startTime <= other.startTime and other.startTime < self.endTime:
             lst = []
-            if self.start != other.start: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
-                lst.append(TimeSlot(self.__start, other.__start))
+            if self.startTime != other.startTime: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
+                lst.append(TimeSlot(self.startTime, other.startTime))
             return lst
 
         # Scenario {[}]
-        if other.start <= self.start and self.start < other.end:
+        if other.startTime <= self.startTime and self.startTime < other.endTime:
             lst = []
-            if other.end != self.end: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
-                lst.append(TimeSlot(other.__end, self.__end))
+            if other.endTime != self.endTime: # Extra check to avoid 0 minute TimeSlots in case of equal boundaries
+                lst.append(TimeSlot(other.endTime, self.endTime))
             return lst
 
 
 
         # If no scenario matches
-        return [TimeSlot.fromString(repr(self))] # Generate new, identical object
+        return [self.copy()] # Generate new, identical object (except the task-reference, which is not copied)
 
-    def copy(self):
-        return TimeSlot.fromString(repr(self))
+    def copy(self): # The task-reference is NOT COPIED
+        return TimeSlot.fromDict(self.export())

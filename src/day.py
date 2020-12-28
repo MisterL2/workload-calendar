@@ -101,12 +101,16 @@ class Day(Comparable):
         else:
             self.timeSlots.append(timeslot)
 
-        self.timeSlots = sorted(self.timeSlots, key=lambda ts: ts.start)
+        self.timeSlots = sorted(self.timeSlots, key=lambda ts: ts.startTime)
 
     # This should only ever be performed on a copy of the days by the schedule / schedule_alg and NEVER the persisted version
-    def scheduleTask(self, newTimeSlot: TimeSlot, task: Task):
-        startTime = newTimeSlot.start
-        endTime = newTimeSlot.end
+    def scheduleTask(self, newTimeSlot: TimeSlot, task: Task, debug=False):
+        if debug:
+            print(f"Trying to schedule {newTimeSlot}!")
+            print(f"Available TimeSlots: {self.timeSlots}")
+
+        startTime = newTimeSlot.startTime
+        endTime = newTimeSlot.endTime
         # Find matching TimeSlot
         for ts in self.timeSlots:
             # If already scheduled
@@ -132,12 +136,9 @@ class Day(Comparable):
 
                 # Re-add the TimeSlots to the day
                 for new in newTimeSlots:
-                    self.addTimeSlot(new) # Re-use the addTimeSlot logic. It also autosorts
-                
-
-
+                    self.addTimeSlot(new) # Re-use the addTimeSlot logic. It also auto-sorts
+                return # This is called separately for each (partial) TimeSlot that is supposed to be filled, so all work is done here
         raise Exception(f"Could not find a matching TimeSlot for {startTime} - {endTime}!")
-
 
 
     def markSpecial(self):
@@ -156,6 +157,9 @@ class Day(Comparable):
             "appointments" : [app.export() for app in self.appointments],
             "special" : self.special
         }
+
+    def copy(self): # Is a deepcopy
+        return Day.fromDict(self.export())
 
     def __repr__(self) -> str:
         timeSlotString = "; ".join([repr(t) for t in self.timeSlots])

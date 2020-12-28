@@ -46,4 +46,4 @@ def generateUUID() -> str:
     return str(uuid.uuid4())
 
 def arrowToTime(a: arrow.Arrow) -> Time:
-    return Time(a.hours, a.minutes)
+    return Time(a.hour, a.minute)

@@ -6,6 +6,9 @@ def getValueFromPriority(priority: float) -> float:
     return (0.0285 * priority**3) - (0.2668 * priority**2) + (1.4123 * priority) - 0.2978
 
 def getTaskHappySignificance(task: Task, debug=False) -> float:
+    if task.maxRemainingTime == 0:
+        raise Exception("Error: Cannot calculate Significance for a task that is already completed!")
+
     totalValue = getValueFromPriority(task.priority)
     expectedDuration = task.avgTime
     valuePerMinute = totalValue / expectedDuration
@@ -23,7 +26,7 @@ def getTaskHappySignificance(task: Task, debug=False) -> float:
         print(f"R: {R}")
 
     # The significance values need to be unique for every task, so that the algorithm is deterministic (i.e. equal priority tasks are always sorted in the same order and not left to chance)
-    uuidInt = uuid.UUID(str(task.uuid)).int # Returns the 128-bit integer value. Max Value is 3.4 x 10**38
+    uuidInt = task.uuidInt # Returns the 128-bit integer value. Max Value is 3.4 x 10**38
     unique = uuidInt / 10**40 # The unique value will be <= 0.034. This means it is larger than the rounding error of floats, but low enough not to interfere with priority.
 
     return 4.2 * T + R + unique
