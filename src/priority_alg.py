@@ -1,5 +1,6 @@
 from task import Task
 from day import Day
+import uuid
 
 def getValueFromPriority(priority: float) -> float:
     return (0.0285 * priority**3) - (0.2668 * priority**2) + (1.4123 * priority) - 0.2978
@@ -21,7 +22,11 @@ def getTaskHappySignificance(task: Task, debug=False) -> float:
         print(f"T: {T}")
         print(f"R: {R}")
 
-    return 4.2 * T + R
+    # The significance values need to be unique for every task, so that the algorithm is deterministic (i.e. equal priority tasks are always sorted in the same order and not left to chance)
+    uuidInt = uuid.UUID(str(task.uuid)).int # Returns the 128-bit integer value. Max Value is 3.4 x 10**38
+    unique = uuidInt / 10**40 # The unique value will be <= 0.034. This means it is larger than the rounding error of floats, but low enough not to interfere with priority.
+
+    return 4.2 * T + R + unique
     #return (T * totalValue) + (M * valuePerMinute) + (R * remainingValuePerMinute)
 
 def prioritiseTaskHappy(task1: Task, task2: Task, debug=False) -> Task: # "Happy" means that both tasks are possible before their deadline, regardless of order. The first task is returned

@@ -4,6 +4,7 @@ from timeslot import TimeSlot
 from comparable import Comparable
 from appointment import Appointment
 from customtime import Time
+from task import Task
 
 class Day(Comparable):
     @staticmethod
@@ -17,7 +18,7 @@ class Day(Comparable):
     def __init__(self, date: date, timeSlots: [TimeSlot], appointments: [Appointment], special=False): # Remember: don't use mutables as default params
         self.special = special
         self.date = date
-        self.timeSlots = []
+        self.timeSlots = [] # Always
         self.appointments = appointments
         
         for timeSlot in timeSlots:
@@ -39,7 +40,7 @@ class Day(Comparable):
     def dateString(self):
         return util.dateString(self.date)
 
-    def freeTimeSlots(self, before=None, after=None) -> [TimeSlot]: # Returns a new list containing new objects / copies
+    def freeTimeSlots(self, before=None, after=None) -> [TimeSlot]: # Returns a NEW DEEPCOPIED LIST containing new objects / copies
         # At this point, priority could be used to determine if appointments should get thrown out
         blocking_appointments = self.appointments.copy()
         virtualAppointments = [] # Blocking appointments to simulate some constraint, i.e. after/before
@@ -54,6 +55,11 @@ class Day(Comparable):
 
         freeSlots = []
         for timeSlot in self.timeSlots:
+            # TimeSlots with a task assigned to it are not free
+            if timeSlot.task is not None:
+                continue
+
+            # Calculate overlap with appointments and perhaps split up TimeSlots as necessary
             currentTimeSlots = [timeSlot.copy()]
             for appointment in blocking_appointments:
                 newTimeSlots = []
@@ -94,6 +100,45 @@ class Day(Comparable):
             print("WARNING: Trying to add temporary timeslot to special day")
         else:
             self.timeSlots.append(timeslot)
+
+        self.timeSlots = sorted(self.timeSlots, key=lambda ts: ts.start)
+
+    # This should only ever be performed on a copy of the days by the schedule / schedule_alg and NEVER the persisted version
+    def scheduleTask(self, newTimeSlot: TimeSlot, task: Task):
+        startTime = newTimeSlot.start
+        endTime = newTimeSlot.end
+        # Find matching TimeSlot
+        for ts in self.timeSlots:
+            # If already scheduled
+            if ts.task is not None:
+                continue
+
+            # If the TimeSlot includes the startTime/endTime (i.e. Scenario [{}])
+            if ts.startTime <= startTime and endTime <= ts.endTime:
+                # Remove the old TimeSlot
+                self.timeSlots.remove(ts)
+
+                # Add the task to it
+                timeSlotToBeScheduled = newTimeSlot.copy()
+                timeSlotToBeScheduled.task = task
+
+                # Calculate the nonOverlap of the existing TimeSlot with the new one. For example:
+                # If they are identical, newTimeSlots = []
+                # If the old ts was 15:00 - 18:00 and the new one 16:00 - 17:00, then this contains 15:00 - 16:00 and 17:00 - 18:00
+                newTimeSlots = ts.nonOverlap(timeSlotToBeScheduled)
+
+                # Add the TimeSlot to be scheduled to the list. The list now contains TimeSlots covering the full area of the original TimeSlot
+                newTimeSlots.append(timeSlotToBeScheduled)
+
+                # Re-add the TimeSlots to the day
+                for new in newTimeSlots:
+                    self.addTimeSlot(new) # Re-use the addTimeSlot logic. It also autosorts
+                
+
+
+        raise Exception(f"Could not find a matching TimeSlot for {startTime} - {endTime}!")
+
+
 
     def markSpecial(self):
         self.special = True

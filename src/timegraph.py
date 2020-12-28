@@ -43,7 +43,7 @@ class TimeInterval():
 
 class TimeGraph():
     def __init__(self):
-        self.timeIntervals = []
+        self.timeIntervals = [] # Always sorted
 
     def addTimeInterval(self, name: str, endTimeInMinutes: int, durationInMinutes: int):
         availableSpace = self.freeSpaceBefore(endTimeInMinutes)
@@ -113,7 +113,7 @@ class TimeGraph():
         return targetTimeInMinutes - blockedTimeAmount
 
     def __repr__(self) -> str:
-        return "|".join([repr(ti) for ti in self.timeIntervals])
+        return " | ".join([repr(ti) for ti in self.timeIntervals])
 
 
 tg = TimeGraph()

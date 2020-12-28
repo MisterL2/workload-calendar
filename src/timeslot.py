@@ -18,6 +18,7 @@ class TimeSlot(Comparable):
     def __init__(self, start: Time, end: Time, temporary=False):
         self.__start = start
         self.__end = end
+        self.task = None # Not persisted
         self.temporary = temporary
         if self.start >= self.end:
             raise ValueError(f"Start date cannot be after the end date! {self.start} was before {self.end}")
@@ -32,6 +33,9 @@ class TimeSlot(Comparable):
 
     def timeInMinutes(self) -> int:
         return (self.__end - self.__start).total_minutes()
+
+    def durationInMinutes(self) -> int:
+        return self.timeInMinutes()
 
     def export(self) -> dict:
         return {

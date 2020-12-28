@@ -28,12 +28,13 @@ class Task:
         self.updateValue("minTime", minutesToAdd + self.minTime)
         self.updateValue("maxTime", minutesToAdd + self.maxTime)
 
-    def addCompletionTime(self, minutesToAdd: int): # Increase progress
+    def addCompletionTime(self, minutesToAdd: int, showUserPrompt=False): # Increase progress
         self.updateValue("completedTime", minutesToAdd + self.completedTime)
-        if self.completedTime > self.maxTime:
-            print("Exceeded MAXIMUM time, is the task finished? [Ask user for yes/no here]")
-        elif self.completedTime > self.minTime:
-            print("Exceeded minimum time, is the task finished? [Ask user for yes/no here]")
+        if showUserPrompt:
+            if self.completedTime > self.maxTime:
+                print("Exceeded MAXIMUM time, is the task finished? [Ask user for yes/no here]")
+            elif self.completedTime > self.minTime:
+                print("Exceeded minimum time, is the task finished? [Ask user for yes/no here]")
 
     @property
     def uuid(self) -> str:

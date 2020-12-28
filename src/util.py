@@ -25,7 +25,7 @@ def dateTimeStringToArrow(dateString: str) -> arrow.Arrow:
 def dateStringToArrow(dateString: str) -> arrow.Arrow:
     return arrow.get(dateString,"DD.MM.YYYY")
 
-def smoothCurrentArrow():
+def smoothCurrentArrow() -> arrow.Arrow:
     currentArrow = arrow.now()
     currentArrow.second = 0
     currentArrow.microsecond = 0
@@ -38,8 +38,12 @@ def smoothCurrentArrow():
 
     return currentArrow
 
+# DO NOT CHANGE THESE. Many Tests depend on them!
 def exampleTimeSlots() -> [TimeSlot]:
     return [TimeSlot(Time(8, 30), Time(12, 30)), TimeSlot(Time(13, 00), Time(17, 00))]
 
 def generateUUID() -> str:
     return str(uuid.uuid4())
+
+def arrowToTime(a: arrow.Arrow) -> Time:
+    return Time(a.hours, a.minutes)
