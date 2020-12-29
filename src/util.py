@@ -47,3 +47,6 @@ def generateUUID() -> str:
 
 def arrowToTime(a: arrow.Arrow) -> Time:
     return Time(a.hour, a.minute)
+
+def formatDate(a: arrow.Arrow) -> str:
+    return a.strftime("%d.%m.%Y %H:%M")

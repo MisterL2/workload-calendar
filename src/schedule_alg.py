@@ -32,6 +32,10 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
         if tmpTask.maxRemainingTime <= 0:
             raise Exception(f"Already completed tmpTask! MaxRemainingTime: {tmpTask.maxRemainingTime}")
 
+    if debug:
+        print("TmpTasks (at start of calculateHappySchedule):")
+        print(tmpTasks)
+
     # It is possible for all tasks to fit (Happy Schedule)
     happySchedule = Schedule(tmpDays)
 
@@ -45,6 +49,8 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
     # TODO: Consider minBlock for all of these calculations! The "area" is just a collection of minutes, we need to consider the individual timeslot blocks
     # For this, the getFreeSpaceBetween and its related day-class-methods need to be adjusted & tested too
 
+    amountOfTimeScheduled = 0
+
     while True:
         # When all tasks are scheduled (they are removed from tmpTasks when fully scheduled)
         if len(tmpTasks) == 0:
@@ -53,11 +59,13 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
         # Build timegraph based on deadlines
         tg = buildHappyTimeGraph(tmpTasks, tmpDays, start)
 
+        if debug:
+            print(tg)
         # Get highest priority Task
         highestPriorityTask = findHighestPriorityTask(tmpTasks)
 
         # Check if there are any TimeIntervals at all (i.e. tasks with deadlines).
-        # If only tasks without deadlines remain, then fullyFree is always True
+        # If only tasks without deadlines remain, then fullyFree is True
         if len(tg.timeIntervals) == 0:
             fullyFree = True
         else: # If there are deadlines remaining, check if the highestProrityTask fits inside of it completely (`fullyFree`)
@@ -65,13 +73,13 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
             ti = tg.timeIntervals[0]
 
             # Calculate available space
-            spaceBeforeFirst = tg.freeSpaceBefore(ti.startTimeInMinutes)
+            spaceBeforeFirst = tg.freeSpaceBetween(amountOfTimeScheduled, ti.startTimeInMinutes)
 
             fullyFree = spaceBeforeFirst > highestPriorityTask.maxRemainingTime
 
-
         if fullyFree:
             # If area is FREE -> Schedule something into that area (TODO: consider minBlock)
+            amountOfTimeScheduled += highestPriorityTask.maxRemainingTime
             happySchedule.scheduleTask(highestPriorityTask, debug=debug)
             tmpTasks.remove(highestPriorityTask)
             continue
@@ -83,9 +91,11 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
             # 1. If there is a task with higher significance than 'closest' that fits into these 3h, schedule it and end iteration (`continue`)
             # 2. If 1. is not possible, schedule 'closest'
             if spaceBeforeFirst > 0 and spaceBeforeFirst <= 180:
-                betterOptions = filter(lambda t: t.maxRemainingTime < spaceBeforeFirst and (getTaskHappySignificance(t) > getTaskHappySignificance(closest)), tmpTasks)
+                betterOptions = list(filter(lambda t: t.maxRemainingTime < spaceBeforeFirst and (getTaskHappySignificance(t) > getTaskHappySignificance(closest)), tmpTasks))
                 if len(betterOptions) > 0:
                     bestOption = sorted(betterOptions, key=getTaskHappySignificance, reverse=True)[0]
+
+                    amountOfTimeScheduled += bestOption.maxRemainingTime
                     happySchedule.scheduleTask(bestOption, debug=debug)
                     tmpTasks.remove(bestOption)
                     continue # End this iteration of the while loop here, as a task was already scheduled.
@@ -94,21 +104,21 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
             # If free time is == 0 -> Schedule 'closest' (only option)
             # If free time is > 3h -> Schedule 'closest' (make room for higher priority task later on)
             # If area is NOT FREE -> out of the unfinished deadline tasks, schedule the task with the CLOSEST deadline (if there are several, the highest priority one is picked)
-            
+            amountOfTimeScheduled += closest.maxRemainingTime
             happySchedule.scheduleTask(closest) # This mutates the task "closest" by adding completionTime to it
             tmpTasks.remove(closest)
 
 
 def findHighestPriorityTask(tasks: [Task]) -> Task:
-    unfinished = filter(lambda t: t.maxRemainingTime > 0, tasks)
+    unfinished = list(filter(lambda t: t.maxRemainingTime > 0, tasks))
     return max(unfinished, key=getTaskHappySignificance)
 
 def findClosestUnfinishedDeadline(tasks: [Task]) -> Task:
-    unfinishedWithDeadline = filter(lambda t: t.hasDeadline() and t.maxRemainingTime > 0, tasks)
-    closestDeadline = min(unfinishedWithDeadline, key=Task.deadline).deadline
+    unfinishedWithDeadline = list(filter(lambda t: t.hasDeadline() and t.maxRemainingTime > 0, tasks))
+    closestDeadline = min(unfinishedWithDeadline, key=lambda task: task.deadline).deadline
 
     # There might be several tasks with the closest deadline. Return the one with highest priority
-    tasksWithClosestDeadline = filter(lambda t: t.deadline == closestDeadline, unfinishedWithDeadline)
+    tasksWithClosestDeadline = list(filter(lambda t: t.deadline == closestDeadline, unfinishedWithDeadline))
     return max(tasksWithClosestDeadline, key=getTaskHappySignificance)
 
 def buildHappyTimeGraph(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow) -> TimeGraph:
@@ -121,6 +131,7 @@ def buildHappyTimeGraph(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow) ->
     for deadlineTask in deadlineTasks:
         endTimeInMinutes = deadlineTimeStampsInMinutes[deadlineTask]
         durationInMinutes = deadlineTask.maxRemainingTime # Takes into consideration already performed progress towards it
+
         if durationInMinutes == 0: # Task is already completed
             continue
         name = deadlineTask.name

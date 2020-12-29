@@ -7,14 +7,14 @@ class Task:
     @staticmethod
     def fromDict(valueDict: dict):
         deadlineArrow = util.dateTimeStringToArrow(valueDict["deadline"])
-        return Task(valueDict["uuid"], valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"])
+        return Task(valueDict["uuid"], valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"], completedTime=valueDict["completedTime"])
 
-    def __init__(self, uuid: str, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int):
+    def __init__(self, uuid: str, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int, completedTime: int=0):
         self.__deadlineArrow = deadline
         self.__data = {
             "uuid": uuid,
             "name" : name,
-            "completedTime" : 0,
+            "completedTime" : completedTime,
             "minTime" : minTimeMinutes, # In Minutes
             "maxTime" : maxTimeMinutes, # In Minutes
             "priority" : priority,
@@ -30,7 +30,7 @@ class Task:
         self.updateValue("maxTime", minutesToAdd + self.maxTime)
 
     def addCompletionTime(self, minutesToAdd: int, showUserPrompt=False): # Increase progress
-        self.updateValue("completedTime", minutesToAdd + self.completedTime)
+        self.updateValue("completedTime", int(minutesToAdd + self.completedTime))
         if showUserPrompt:
             if self.completedTime > self.maxTime:
                 print("Exceeded MAXIMUM time, is the task finished? [Ask user for yes/no here]")
@@ -97,6 +97,10 @@ class Task:
     def progress(self):
         return self.completedTime / self.maxTime # For consistency reasons, use maxTime
 
+    @property
+    def progressPercentage(self):
+        return f"{round(self.progress*100)}%"
+
     def hasDeadline(self) -> bool:
         return self.deadline is not None
 
@@ -107,7 +111,8 @@ class Task:
         return timeslot.timeInMinutes() >= self.minBlock
 
     def __repr__(self) -> str:
-        return f"{self.name} ({round(self.minTime/60,1)} h - {round(self.maxTime/60,1)} h) Priority: {self.priority}/10 Deadline: [{self.deadline}] Min Block Size: {self.minBlock} min"
+        return f"{self.name} ({round(self.maxTime/60,1)} h) [Prio: {self.priority}] Deadline: {util.formatDate(self.deadline)} Progress: {self.progressPercentage}"
+        #return f"{self.name} ({round(self.minTime/60,1)} h - {round(self.maxTime/60,1)} h) Priority: {self.priority}/10 Deadline: [{self.deadline}] Min Block Size: {self.minBlock} min"
 
     def __eq__(self, other) -> bool:
         return self.uuid == other.uuid

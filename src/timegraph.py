@@ -46,7 +46,7 @@ class TimeGraph():
         self.timeIntervals = [] # Always sorted
 
     def addTimeInterval(self, name: str, endTimeInMinutes: int, durationInMinutes: int):
-        availableSpace = self.freeSpaceBefore(endTimeInMinutes)
+        availableSpace = self.freeSpaceBetween(0, endTimeInMinutes)
         if availableSpace < durationInMinutes:
             raise Exception(f"Not enough space available to meet all deadlines (not a happy schedule). Needed {durationInMinutes}min but only had {availableSpace}min")
 
@@ -103,14 +103,14 @@ class TimeGraph():
 
         self.timeIntervals = sorted(self.timeIntervals, key=lambda ti: ti.startTimeInMinutes)
 
-    def freeSpaceBefore(self, targetTimeInMinutes: int):
-        relevantTimeIntervals = filter(lambda ti: ti.startTimeInMinutes < targetTimeInMinutes, self.timeIntervals)
+    def freeSpaceBetween(self, targetStartTimeInMinutes: int, targetEndTimeInMinutes: int):
+        relevantTimeIntervals = list(filter(lambda ti: ti.startTimeInMinutes < targetEndTimeInMinutes and ti.endTimeInMinutes > targetStartTimeInMinutes, self.timeIntervals))
         blockedTimeAmount = 0
         for rti in relevantTimeIntervals:
-            # Use duration unless the targetTime is within the TimeInterval; then select only the time from start to targetTime
-            blockedTimeAmount += min(rti.durationInMinutes, targetTimeInMinutes - rti.startTimeInMinutes)
+            # This formula captures, for every possible scenario, the correct amount of time blocked
+            blockedTimeAmount += min(targetEndTimeInMinutes, rti.endTimeInMinutes) - max(targetStartTimeInMinutes, rti.startTimeInMinutes)
 
-        return targetTimeInMinutes - blockedTimeAmount
+        return targetEndTimeInMinutes - targetStartTimeInMinutes - blockedTimeAmount
 
     def __repr__(self) -> str:
         return " | ".join([repr(ti) for ti in self.timeIntervals])

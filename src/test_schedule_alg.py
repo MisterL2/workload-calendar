@@ -11,7 +11,7 @@ class ScheduleTest(TestCase):
         dates = [arrow.get(f"{i:02}.01.2099", "DD.MM.YYYY").date() for i in range(1, 31)] # 01.01 - 30.01; 240h total
         defaultDays = [Day(d, util.exampleTimeSlots(), [], special=True) for d in dates]
         paramDictLst = [
-            {"name": "cEHS-0.1", "days": defaultDays.copy(),
+            {"name": "cEHS-0.1", "days": defaultDays.copy(), # Default case; easy deadlines, just schedule due to priority
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
                     {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
@@ -63,11 +63,95 @@ class ScheduleTest(TestCase):
                         ]
                     }
                 ]
+            },
+            {"name": "cEHS-0.2", "days": defaultDays.copy(), # Lowest priority date has a tight deadline and needs to be scheduled first. One date also has a non-zero progress
+                "tasks": [
+                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("03.01.2099 11:00", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #3", "time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                ],
+                "expected" : [
+                    {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 12:30", "taskName": "Task #1"},
+                            {"timeslotString": "13:00 - 17:00", "taskName": "Task #1"}
+                        ]
+                    },
+                    {"date": arrow.get("02.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 10:30", "taskName": "Task #1"},
+                            {"timeslotString": "10:30 - 12:30", "taskName": "Task #2"},
+                            {"timeslotString": "13:00 - 17:00", "taskName": "Task #2"}
+                        ]
+                    },
+                    {"date": arrow.get("03.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 12:30", "taskName": "Task #2"},
+                            {"timeslotString": "13:00 - 17:00", "taskName": "Task #3"}
+                        ]
+                    },
+                    {"date": arrow.get("04.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 12:30", "taskName": "Task #3"},
+                            {"timeslotString": "13:00 - 17:00", "taskName": "Task #3"}
+                        ]
+                    },
+                    {"date": arrow.get("05.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 11:30", "taskName": "Task #3"},
+                            {"timeslotString": "11:30 - 12:30", "taskName": None},
+                            {"timeslotString": "13:00 - 17:00", "taskName": None}
+                        ]
+                    },
+                    {"date": arrow.get("06.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 12:30", "taskName": None},
+                            {"timeslotString": "13:00 - 17:00", "taskName": None},
+                        ]
+                    }
+                ]
+            },
+            {"name": "cEHS-0.3", "days": defaultDays.copy(), # The low priority task has a moderately tight deadline that either of the higher priority tasks could fill
+                "tasks": [
+                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 14:30", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #2", "time": 1000, "priority": 8, "progress": 0.8, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #3", "time": 200, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                ],
+                "expected" : [
+                    {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 11:50", "taskName": "Task #2"},
+                            {"timeslotString": "11:50 - 12:30", "taskName": "Task #1"},
+                            {"timeslotString": "13:00 - 17:00", "taskName": "Task #1"}
+                        ]
+                    },
+                    {"date": arrow.get("02.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 12:30", "taskName": "Task #1"},
+                            {"timeslotString": "13:00 - 14:20", "taskName": "Task #1"},
+                            {"timeslotString": "14:20 - 17:00", "taskName": "Task #3"}
+                        ]
+                    },
+                    {"date": arrow.get("03.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 09:10", "taskName": "Task #3"},
+                            {"timeslotString": "09:10 - 12:30", "taskName": None},
+                            {"timeslotString": "13:00 - 17:00", "taskName": None}
+                        ]
+                    },
+                    {"date": arrow.get("04.01.2099", "DD.MM.YYYY").date(),
+                        "timeslots": [
+                            {"timeslotString": "08:30 - 12:30", "taskName": None},
+                            {"timeslotString": "13:00 - 17:00", "taskName": None},
+                        ]
+                    }
+                ]
             }
         ]
 
         for paramDict in paramDictLst:
             with self.subTest(name=paramDict["name"]):
+                print(paramDict["name"])
                 tasks = []
                 for taskDict in paramDict["tasks"]:
                     task = Task(util.generateUUID(), taskDict["taskName"], taskDict["time"], taskDict["time"], taskDict["priority"], taskDict["deadline"], 0)
@@ -76,10 +160,11 @@ class ScheduleTest(TestCase):
                 
                 days = paramDict["days"]
 
-                debug = False
+                debug = True
 
                 schedule = schedule_alg.calculateSchedule(tasks, days, arrow.Arrow.fromdate(days[0].date), debug=debug)
 
+                print(tasks)
                 print(schedule)
 
                 for solutionDict in paramDict["expected"]: # Go through each expected day and see if the timeslots are assigned correctly
@@ -108,7 +193,7 @@ class ScheduleTest(TestCase):
                         if expectedTimeSlot.task is None:
                             self.assertIsNone(actualTimeSlot.task, f"Actual TimeSlot should have no task attached to it for a free slot, but instead had {actualTimeSlot.task}.")
                         else:
-                            self.assertEqual(expectedTimeSlot.task, actualTimeSlot.task, f"The wrong task was allocated to this TimeSlot! Should have been {expectedTimeSlot.task} but instead was {actualTimeSlot.task}")
+                            self.assertEqual(expectedTimeSlot.task, actualTimeSlot.task, f"The wrong task was allocated to this TimeSlot! Should have been {expectedTimeSlot.task.name} but instead was {actualTimeSlot.task.name}")
 
 
 
