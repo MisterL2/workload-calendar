@@ -37,6 +37,9 @@ class Schedule():
         else:
             minutesToSchedule = minutes
 
+        if debug:
+            print(f"Schedule is scheduling {minutesToSchedule}min for task {task}")
+
         scheduledMinutes = 0
 
         currentArrow = util.smoothCurrentArrow()

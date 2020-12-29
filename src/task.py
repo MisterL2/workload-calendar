@@ -9,20 +9,22 @@ class Task:
         deadlineArrow = util.dateTimeStringToArrow(valueDict["deadline"])
         return Task(valueDict["uuid"], valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"], completedTime=valueDict["completedTime"])
 
-    def __init__(self, uuid: str, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int, completedTime: int=0):
-        self.__deadlineArrow = deadline
+    def __init__(self, uuidString: str, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int, completedTime: int=0):
+        self.__deadlineArrow = deadline if deadline is not None else util.getInfinityDate()
         self.__data = {
-            "uuid": uuid,
+            "uuid": uuidString,
             "name" : name,
             "completedTime" : completedTime,
             "minTime" : minTimeMinutes, # In Minutes
             "maxTime" : maxTimeMinutes, # In Minutes
             "priority" : priority,
-            "deadline" : util.dateString(deadline, time=True) if deadline is not None else None,
+            "deadline" : util.dateString(self.__deadlineArrow, time=True),
             "minBlock" : minBlock  # If this is 120, it means that this task should not be split up into chunks smaller than 120mins.
         }
 
     def updateValue(self, key, value):
+        if key == "deadline" and value is None:
+            value = util.getInfinityDate()
         self.__data[key] = value
 
     def addTimeRequirement(self, minutesToAdd: int): # Make the task longer
@@ -102,7 +104,7 @@ class Task:
         return f"{round(self.progress*100)}%"
 
     def hasDeadline(self) -> bool:
-        return self.deadline is not None
+        return self.deadline != util.getInfinityDate()
 
     def export(self):
         return self.__data
@@ -111,7 +113,10 @@ class Task:
         return timeslot.timeInMinutes() >= self.minBlock
 
     def __repr__(self) -> str:
-        return f"{self.name} ({round(self.maxTime/60,1)} h) [Prio: {self.priority}] Deadline: {util.formatDate(self.deadline)} Progress: {self.progressPercentage}"
+        if self.hasDeadline:
+            return f"{self.name} ({round(self.maxTime/60,1)} h) [Prio: {self.priority}] Deadline: {util.formatDate(self.deadline)} Progress: {self.progressPercentage}"
+        else:
+            return f"{self.name} ({round(self.maxTime/60,1)} h) [Prio: {self.priority}] Deadline: <None> Progress: {self.progressPercentage}"
         #return f"{self.name} ({round(self.minTime/60,1)} h - {round(self.maxTime/60,1)} h) Priority: {self.priority}/10 Deadline: [{self.deadline}] Min Block Size: {self.minBlock} min"
 
     def __eq__(self, other) -> bool:

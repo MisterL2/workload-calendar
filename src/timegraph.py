@@ -53,7 +53,6 @@ class TimeGraph():
         # Overlapping time intervals are not allowed, so in case of conflict, shift forward
         startTimeInMinutes = endTimeInMinutes - durationInMinutes
 
-        
         newTimeInterval = TimeInterval(name, startTimeInMinutes, endTimeInMinutes)
         
         # First, see if we overlap the START of another TimeInterval

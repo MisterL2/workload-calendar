@@ -63,49 +63,62 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
             print(tg)
         # Get highest priority Task
         highestPriorityTask = findHighestPriorityTask(tmpTasks)
+        if debug: print(f"Highest priority task: {highestPriorityTask}")
 
         # Check if there are any TimeIntervals at all (i.e. tasks with deadlines).
         # If only tasks without deadlines remain, then fullyFree is True
         if len(tg.timeIntervals) == 0:
             fullyFree = True
-        else: # If there are deadlines remaining, check if the highestProrityTask fits inside of it completely (`fullyFree`)
+        else: # If there are deadlines remaining, check if the highestPriorityTask fits inside of it completely (`fullyFree`)
             # Look at the area before the first TimeInterval of the TimeGraph
             ti = tg.timeIntervals[0]
 
             # Calculate available space
             spaceBeforeFirst = tg.freeSpaceBetween(amountOfTimeScheduled, ti.startTimeInMinutes)
 
-            fullyFree = spaceBeforeFirst > highestPriorityTask.maxRemainingTime
+            fullyFree = spaceBeforeFirst >= highestPriorityTask.maxRemainingTime
 
         if fullyFree:
             # If area is FREE -> Schedule something into that area (TODO: consider minBlock)
             amountOfTimeScheduled += highestPriorityTask.maxRemainingTime
-            happySchedule.scheduleTask(highestPriorityTask, debug=debug)
+            happySchedule.scheduleTask(highestPriorityTask, debug=debug) # This mutates the task by adding completionTime to it
             tmpTasks.remove(highestPriorityTask)
             continue
         else:
             # Find the task with the closest deadline. If there are several with the same deadline, the one with highest significance is picked
             closest = findClosestUnfinishedDeadline(tmpTasks)
 
-            # If free time is > 0 and <= 3h
-            # 1. If there is a task with higher significance than 'closest' that fits into these 3h, schedule it and end iteration (`continue`)
-            # 2. If 1. is not possible, schedule 'closest'
-            if spaceBeforeFirst > 0 and spaceBeforeFirst <= 180:
-                betterOptions = list(filter(lambda t: t.maxRemainingTime < spaceBeforeFirst and (getTaskHappySignificance(t) > getTaskHappySignificance(closest)), tmpTasks))
+            # TODO: For the cases below, weigh off the delay on the highest priority task vs the priority-difference between the highest priority task that fits and closest
+
+            # If free time is > 0 and <= 8h
+            # 1. If there is a task with higher significance than 'closest' that fits into the first 3h, schedule it and end iteration (`continue`)
+            # 2. If there is a task with higher significance than 'closest' that fits into the first 8h AND has at least 0.8x the significance of the highestPriorityTask, schedule it and end iteration (`continue`)
+            # 3. If 1. and 2. are not possible, schedule 'closest'
+            if spaceBeforeFirst > 0 and spaceBeforeFirst <= 640:
+                betterOptions = list(filter(
+                            lambda t:
+                                t.maxRemainingTime < spaceBeforeFirst
+                                and getTaskHappySignificance(t) > getTaskHappySignificance(closest)
+                                and (
+                                    t.maxRemainingTime <= 180 # Scenario 1.
+                                    or
+                                    getTaskHappySignificance(highestPriorityTask)*0.8 < getTaskHappySignificance(t) # Scenario 2.
+                                    )
+                            , tmpTasks))
                 if len(betterOptions) > 0:
                     bestOption = sorted(betterOptions, key=getTaskHappySignificance, reverse=True)[0]
 
                     amountOfTimeScheduled += bestOption.maxRemainingTime
-                    happySchedule.scheduleTask(bestOption, debug=debug)
+                    happySchedule.scheduleTask(bestOption, debug=debug) # This mutates the task by adding completionTime to it
                     tmpTasks.remove(bestOption)
                     continue # End this iteration of the while loop here, as a task was already scheduled.
                 
 
             # If free time is == 0 -> Schedule 'closest' (only option)
-            # If free time is > 3h -> Schedule 'closest' (make room for higher priority task later on)
+            # If free time is > 8h -> Schedule 'closest' (make room for higher priority task later on)
             # If area is NOT FREE -> out of the unfinished deadline tasks, schedule the task with the CLOSEST deadline (if there are several, the highest priority one is picked)
             amountOfTimeScheduled += closest.maxRemainingTime
-            happySchedule.scheduleTask(closest) # This mutates the task "closest" by adding completionTime to it
+            happySchedule.scheduleTask(closest, debug=debug) # This mutates the task "closest" by adding completionTime to it
             tmpTasks.remove(closest)
 
 

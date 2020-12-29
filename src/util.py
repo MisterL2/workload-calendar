@@ -50,3 +50,6 @@ def arrowToTime(a: arrow.Arrow) -> Time:
 
 def formatDate(a: arrow.Arrow) -> str:
     return a.strftime("%d.%m.%Y %H:%M")
+
+def getInfinityDate() -> arrow.Arrow:
+    return arrow.get("31.12.3999 00:00", "DD.MM.YYYY HH:mm")
