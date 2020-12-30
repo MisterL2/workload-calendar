@@ -174,8 +174,10 @@ class Day(Comparable):
     def copy(self): # Is a deepcopy
         return Day.fromDict(self.export())
 
-    def display(self) -> str:
+    def detailedView(self) -> str:
         dayScheduleString = "\n".join([repr(t) for t in self.daySchedule])
+        if dayScheduleString == "": 
+            dayScheduleString = "<<< Nothing scheduled on this day! Enjoy your freedom ;) >>>"
         weekday = self.date.strftime("%A").capitalize()
         return f"{weekday} {self.dateString} ({self.timeInMinutes()/60:.1f} h)\n{dayScheduleString}"
 

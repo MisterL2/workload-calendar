@@ -44,7 +44,7 @@ def initDays(config: {}) -> [Day]:
     if days:
         startDate = days[-1].date
     else:
-        startDate = today
+        startDate = arrow.now().date()
 
     currentDate = arrow.get(startDate)
     for _ in range(daysToCreate): # Fill up days to get up to dayCount

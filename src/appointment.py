@@ -32,6 +32,6 @@ class Appointment():
 
     def __repr__(self) -> str:
         if self.task is not None:
-            return f"{self.name} ({self.task})"
+            return f"{self.name} ({self.timeSlot.timeString}) [{self.task}]"
         else:
-            return f"{self.name}"
+            return f"{self.name} ({self.timeSlot.timeString})"
