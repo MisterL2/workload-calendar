@@ -14,20 +14,23 @@ import util
 # "Sad" -> Not every Task can be completed, so some tasks must be sacrificed
 
 # This is the MAIN function that is called, which delegates to all the other functions
-def calculateSchedule(tasks: [Task], days: [Day], start: arrow.Arrow, debug=False) -> Schedule:
+def calculateSchedule(tasks: [Task], days: [Day], start: arrow.Arrow, lastWorkConfirmed=None, debug=False) -> Schedule:
+    if lastWorkConfirmed is None:
+        lastWorkConfirmed = start.clone()
+    
     # Creates a clean copy of the tasks and days, so that no evil mutation occurs
     tmpDays = sorted([day.copy() for day in days], key=lambda d: d.date)
     tmpTasks = sorted([task.copy() for task in tasks], key=lambda t: t.deadline)
 
     if isSolvable(tasks, days, start, useMinimum=False):
-        return calculateHappySchedule(tmpTasks, tmpDays, start, debug=debug)
+        return calculateHappySchedule(tmpTasks, tmpDays, lastWorkConfirmed, start, debug=debug)
     elif isSolvable(tasks, days, start, useMinimum=True):
-        return calculateSadSchedule(tmpTasks, tmpDays, start, debug=debug)
-        #return calculateRiskySchedule(tmpTasks, tmpDays, start)
+        return calculateSadSchedule(tmpTasks, tmpDays, lastWorkConfirmed, start, debug=debug)
+        #return calculateRiskySchedule(tmpTasks, tmpDays, created=start)
     else:
-        return calculateSadSchedule(tmpTasks, tmpDays, start, debug=debug)
+        return calculateSadSchedule(tmpTasks, tmpDays, lastWorkConfirmed, start, debug=debug)
 
-def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow, debug=False) -> Schedule:
+def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
     for tmpTask in tmpTasks:
         if tmpTask.maxRemainingTime <= 0:
             raise Exception(f"Already completed tmpTask! MaxRemainingTime: {tmpTask.maxRemainingTime}")
@@ -37,7 +40,7 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
         print(tmpTasks)
 
     # It is possible for all tasks to fit (Happy Schedule)
-    happySchedule = Schedule(tmpDays)
+    happySchedule = Schedule(tmpDays, lastWorkConfirmed, created=start)
 
     # Find date of last day
     endDate = arrow.get(tmpDays[-1].date)
@@ -48,6 +51,7 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
 
     # TODO: Consider minBlock for all of these calculations! The "area" is just a collection of minutes, we need to consider the individual timeslot blocks
     # For this, the getFreeSpaceBetween and its related day-class-methods need to be adjusted & tested too
+    # Keep in mind that minBlocks may change, i.e. there might be 300 free minutes with minBlock 30-compatible times, but after scheduling i.e. a 25min task into a 50-minute slot, the remaining 25min are also lost to minBlock and could cause a deadline clash.
 
     amountOfTimeScheduled = 0
 
@@ -79,7 +83,7 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow,
             fullyFree = spaceBeforeFirst >= highestPriorityTask.maxRemainingTime
 
         if fullyFree:
-            # If area is FREE -> Schedule something into that area (TODO: consider minBlock)
+            # If area is FREE -> Schedule the highest priority task into that area
             amountOfTimeScheduled += highestPriorityTask.maxRemainingTime
             happySchedule.scheduleTask(highestPriorityTask, debug=debug) # This mutates the task by adding completionTime to it
             tmpTasks.remove(highestPriorityTask)
@@ -153,19 +157,17 @@ def buildHappyTimeGraph(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow) ->
 
     return timegraph
 
-def calculateRiskySchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow, debug=False) -> Schedule:
+def calculateRiskySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
     raise Exception("Risky schedule is not implemented and a low priority feature")
 
-def calculateSadSchedule(tmpTasks: [Task], tmpDays: [Day], start: arrow.Arrow, debug=False) -> Schedule:
+def calculateSadSchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
     raise Exception("Sad schedule is not implemented yet")
 
 def unfinishedDeadlineTasks(tasks: [Task]) -> [Task]:
     return list(filter(lambda task: task.hasDeadline() and task.maxRemainingTime > 0, tasks))
 
 def isSolvable(tasks: [Task], days: [Day], start: arrow.Arrow, useMinimum=False, debug=False) -> bool:
-    if (util.smoothCurrentArrow() > start):
-        raise Exception("Cannot solve an algorithm for the past")
-    # TO DO - Incorporate current day / time as lower minimum!
+    # Is used to solve a schedule from a past standpoint, i.e. where start < current. This is used for recreating a past schedule for example.
     sortedTasks = sorted(unfinishedDeadlineTasks(tasks), key=lambda task: task.deadline)
     sortedDays = sorted(days, key=lambda day: day.date)
 

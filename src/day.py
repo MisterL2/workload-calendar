@@ -176,11 +176,13 @@ class Day(Comparable):
 
     def display(self) -> str:
         dayScheduleString = "\n".join([repr(t) for t in self.daySchedule])
-        return f"{self.dateString} ({self.timeInMinutes()/60:.1f} h)\n{dayScheduleString}"
+        weekday = self.date.strftime("%A").capitalize()
+        return f"{weekday} {self.dateString} ({self.timeInMinutes()/60:.1f} h)\n{dayScheduleString}"
 
     def __repr__(self) -> str:
         timeSlotString = "; ".join([repr(t) for t in self.timeSlots])
         appointmentString = "; ".join([repr(a) for a in self.appointments])
+        weekdayIdentifier = self.date.strftime("%A").upper()[:2]
 
         # Mainly for debug
         if self.special:
@@ -188,7 +190,7 @@ class Day(Comparable):
         else: # Default
             specialIdentifier = "D"
 
-        return f"{self.dateString} {specialIdentifier} ({self.timeInMinutes()/60:.1f} h) Timeslots: [{timeSlotString}] Appointments: [{appointmentString}]"
+        return f"{self.dateString} ({weekdayIdentifier}) {specialIdentifier} ({self.timeInMinutes()/60:.1f} h) Timeslots: [{timeSlotString}] Appointments: [{appointmentString}]"
 
     def __lt__(self, other) -> bool:
         return self.date < other.date

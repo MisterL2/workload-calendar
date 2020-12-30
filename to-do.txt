@@ -1,0 +1,12 @@
+TO-DO
+-> Test UI confirmation sequence
+-> Ability to Remove TimeSlots
+-> Mark tasks as completed
+-> Display all tasks
+-> Display a single day
+-> Display the current schedule-week
+-> Go through schedule-weeks in UI (with commands like "next", "previous") and check constraints on weeks that are too far in the past
+-> Display schedule-week for date given from user
+
+
+-> Add Task-Appointments (fixed time appointment that belongs to a task and is counted towards its hours. Be careful with this! This needs to be added to i.e. onInit-recentlyCompleted in UI as well.

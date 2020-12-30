@@ -30,9 +30,9 @@ class ScheduleTest(TestCase):
         paramDictLst = [
             {"name": "cEHS-0.1a", "days": [day.copy() for day in defaultDays], # Default case; easy deadlines, just schedule due to priority
                 "tasks": [
-                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #3", "time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #3", "time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                 ],
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
@@ -84,9 +84,9 @@ class ScheduleTest(TestCase):
 
             {"name": "cEHS-0.1b", "days": [day.copy() for day in defaultDays], # Default case; no deadlines, just schedule due to priority
                 "tasks": [
-                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": None},
-                    {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0, "deadline": None},
-                    {"taskName": "Task #3", "time": 900, "priority": 6, "progress": 0, "deadline": None},
+                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": None, "minBlock": 0},
+                    {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0, "deadline": None, "minBlock": 0},
+                    {"taskName": "Task #3", "time": 900, "priority": 6, "progress": 0, "deadline": None, "minBlock": 0},
                 ],
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
@@ -139,9 +139,9 @@ class ScheduleTest(TestCase):
 
             {"name": "cEHS-0.2", "days": [day.copy() for day in defaultDays], # Lowest priority date has a fairly tight deadline and needs to be scheduled first. One date also has a non-zero progress
                 "tasks": [
-                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("03.01.2099 11:00", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #3", "time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("03.01.2099 11:00", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #3", "time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                 ],
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
@@ -186,9 +186,9 @@ class ScheduleTest(TestCase):
 
             {"name": "cEHS-0.3", "days": [day.copy() for day in defaultDays], # The low priority task has a moderately tight deadline that either of the higher priority tasks could fill
                 "tasks": [
-                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 14:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #2", "time": 1000, "priority": 8, "progress": 0.8, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #3", "time": 200, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 14:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #2", "time": 1000, "priority": 8, "progress": 0.8, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #3", "time": 200, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                 ],
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
@@ -220,9 +220,9 @@ class ScheduleTest(TestCase):
 
             {"name": "cEHS-0.4", "days": [day.copy() for day in defaultDays], # The low priority task has a moderately tight deadline that only the less-significant of the two higher-priority tasks can fill
                 "tasks": [
-                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 14:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #2", "time": 1000, "priority": 8, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #3", "time": 160, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
+                    {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 14:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #2", "time": 1000, "priority": 8, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #3", "time": 160, "priority": 6, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                 ],
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
@@ -263,10 +263,10 @@ class ScheduleTest(TestCase):
 
             {"name": "cEHS-0.5", "days": [day.copy() for day in defaultDays], # A very high priority no-deadline task should be scheduled first, then the two identical-deadline tasks in order of SIGNIFICANCE (prio-6 task has higher significance due to progress) and then the other late-deadline one. Also there are non-zero progress values.
                 "tasks": [
-                    {"taskName": "Task #1", "time": 600, "priority": 4, "progress": 0, "deadline": arrow.get("02.01.2099 14:35", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #2", "time": 1200, "priority": 6, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #3", "time": 200, "priority": 7, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #4", "time": 215, "priority": 10, "progress": 0, "deadline": None}
+                    {"taskName": "Task #1", "time": 600, "priority": 4, "progress": 0, "deadline": arrow.get("02.01.2099 14:35", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #2", "time": 1200, "priority": 6, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #3", "time": 200, "priority": 7, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #4", "time": 215, "priority": 10, "progress": 0, "deadline": None, "minBlock": 0}
                 ],
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
@@ -309,24 +309,24 @@ class ScheduleTest(TestCase):
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
-                            {"timeslotString": appointments[0].timeSlot.timeSlotString, "taskName": appointments[0].name},
-                            {"timeslotString": appointments[1].timeSlot.timeSlotString, "taskName": appointments[1].name},
+                            {"timeslotString": appointments[0].timeSlot.timeString, "taskName": appointments[0].name},
+                            {"timeslotString": appointments[1].timeSlot.timeString, "taskName": appointments[1].name},
                         ]
                     },
                     {"date": arrow.get("02.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
-                            {"timeslotString": appointments[2].timeSlot.timeSlotString, "taskName": appointments[2].name},
-                            {"timeslotString": appointments[3].timeSlot.timeSlotString, "taskName": appointments[3].name}
+                            {"timeslotString": appointments[2].timeSlot.timeString, "taskName": appointments[2].name},
+                            {"timeslotString": appointments[3].timeSlot.timeString, "taskName": appointments[3].name}
                         ]
                     },
                     {"date": arrow.get("03.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
-                            {"timeslotString": appointments[4].timeSlot.timeSlotString, "taskName": appointments[4].name},
+                            {"timeslotString": appointments[4].timeSlot.timeString, "taskName": appointments[4].name},
                         ]
                     },
                     {"date": arrow.get("04.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
-                            {"timeslotString": appointments[5].timeSlot.timeSlotString, "taskName": appointments[5].name},
+                            {"timeslotString": appointments[5].timeSlot.timeString, "taskName": appointments[5].name},
                         ]
                     },
                     {"date": arrow.get("05.01.2099", "DD.MM.YYYY").date(),
@@ -339,42 +339,42 @@ class ScheduleTest(TestCase):
 
             {"name": "cEHS-0.7", "days": [day.copy() for day in appointmentDays], # Similar to cEHS-0.5, but with a different list of days (containing appointments)
                 "tasks": [
-                    {"taskName": "Task #1", "time": 600, "priority": 4, "progress": 0, "deadline": arrow.get("03.01.2099 11:00", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #2", "time": 1200, "priority": 6, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #3", "time": 200, "priority": 7, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm")},
-                    {"taskName": "Task #4", "time": 215, "priority": 10, "progress": 0, "deadline": None}
+                    {"taskName": "Task #1", "time": 600, "priority": 4, "progress": 0, "deadline": arrow.get("03.01.2099 11:00", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #2", "time": 1200, "priority": 6, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #3", "time": 200, "priority": 7, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
+                    {"taskName": "Task #4", "time": 215, "priority": 10, "progress": 0, "deadline": None, "minBlock": 0}
                 ],
                 "expected" : [
                     {"date": arrow.get("01.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
                             {"timeslotString": "08:30 - 10:00", "taskName": "Task #4"},
-                            {"timeslotString": appointments[0].timeSlot.timeSlotString, "taskName": appointments[0].name},
+                            {"timeslotString": appointments[0].timeSlot.timeString, "taskName": appointments[0].name},
                             {"timeslotString": "11:15 - 12:30", "taskName": "Task #4"},
                             {"timeslotString": "13:00 - 13:50", "taskName": "Task #4"},
                             {"timeslotString": "13:50 - 14:00", "taskName": "Task #1"},
-                            {"timeslotString": appointments[1].timeSlot.timeSlotString, "taskName": appointments[1].name},
+                            {"timeslotString": appointments[1].timeSlot.timeString, "taskName": appointments[1].name},
                             {"timeslotString": "15:00 - 17:00", "taskName": "Task #1"}
                         ]
                     },
                     {"date": arrow.get("02.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
-                            {"timeslotString": appointments[2].timeSlot.timeSlotString, "taskName": appointments[2].name},
+                            {"timeslotString": appointments[2].timeSlot.timeString, "taskName": appointments[2].name},
                             {"timeslotString": "09:30 - 12:30", "taskName": "Task #1"},
                             {"timeslotString": "13:00 - 16:00", "taskName": "Task #1"},
-                            {"timeslotString": appointments[3].timeSlot.timeSlotString, "taskName": appointments[3].name}
+                            {"timeslotString": appointments[3].timeSlot.timeString, "taskName": appointments[3].name}
                         ]
                     },
                     {"date": arrow.get("03.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
                             {"timeslotString": "08:30 - 10:20", "taskName": "Task #1"},
                             {"timeslotString": "10:20 - 11:30", "taskName": "Task #2"},
-                            {"timeslotString": appointments[4].timeSlot.timeSlotString, "taskName": appointments[4].name},
+                            {"timeslotString": appointments[4].timeSlot.timeString, "taskName": appointments[4].name},
                             {"timeslotString": "13:30 - 17:00", "taskName": "Task #2"}
                         ]
                     },
                     {"date": arrow.get("04.01.2099", "DD.MM.YYYY").date(),
                         "timeslots": [
-                            {"timeslotString": appointments[5].timeSlot.timeSlotString, "taskName": appointments[5].name},
+                            {"timeslotString": appointments[5].timeSlot.timeString, "taskName": appointments[5].name},
                         ]
                     },
                     {"date": arrow.get("05.01.2099", "DD.MM.YYYY").date(),
@@ -392,6 +392,7 @@ class ScheduleTest(TestCase):
                     }
                 ]
             }
+         
         ]
 
         for paramDict in paramDictLst:
@@ -399,7 +400,7 @@ class ScheduleTest(TestCase):
                 print(paramDict["name"])
                 tasks = []
                 for taskDict in paramDict["tasks"]:
-                    task = Task(util.generateUUID(), taskDict["taskName"], taskDict["time"], taskDict["time"], taskDict["priority"], taskDict["deadline"], 0)
+                    task = Task(util.generateUUID(), taskDict["taskName"], taskDict["time"], taskDict["time"], taskDict["priority"], taskDict["deadline"], taskDict["minBlock"])
                     task.addCompletionTime(taskDict["progress"] * taskDict["time"])
                     tasks.append(task)
                 

@@ -52,7 +52,7 @@ class TimeSlot(Comparable):
         return self.timeInMinutes()
 
     @property
-    def timeSlotString(self) -> str:
+    def timeString(self) -> str:
         return f"{self.startTimeString} - {self.endTimeString}"
 
     def export(self) -> dict:
@@ -128,6 +128,10 @@ class TimeSlot(Comparable):
 
         # If no scenario matches
         return [self.copy()] # Generate new, identical object (except the task-reference, which is not copied)
+
+    # Scenario [{}] or EQUAL
+    def containsOrEquals(self, other) -> bool:
+        return self.startTime <= other.startTime and self.endTime >= other.startTime
 
     def copy(self): # The task-reference is NOT COPIED
         return TimeSlot.fromDict(self.export())

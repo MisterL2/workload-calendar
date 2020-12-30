@@ -3,20 +3,25 @@ import arrow
 from task import Task
 from day import Day
 from timeslot import TimeSlot
+from schedule import Schedule
+from schedule_alg import calculateSchedule
 
 # Save
 
-def saveConfig(config):
+def saveConfig(config: {}):
     save(config, "config")
 
-def saveTasks(tasks):
+def saveTasks(tasks: [Task]):
     parsedTasks = [task.export() for task in tasks]
     save(parsedTasks, "tasks")
 
-def saveDays(days):
+def saveDays(days: [Day]):
     parsedDays = [day.export() for day in days]
     # print(parsedDays)
     save(parsedDays, "days")
+
+def saveSchedule(schedule: Schedule):
+    save(schedule.export(), "schedule")
 
 def save(data, fileName: str):
     serialized = json.dumps(data)
@@ -29,9 +34,8 @@ def save(data, fileName: str):
 def initDays(config: {}) -> [Day]:
     days = [Day.fromDict(d) for d in load("days")]
 
-    # Remove old days
-    today = arrow.now().date() # Automatically considers timezone
-    days = [day for day in days if day.date >= today]
+    # DO NOT Remove old days. They are necessary to properly recreate the schedule for past days
+
     # Create new days to remain at 1000 day threshold (20 for debug)
 
     # dayCount = 1000 # Real
@@ -98,3 +102,9 @@ def load(name: str):
     with open(f"./data/{name}.json") as f:
         out = f.read()
     return json.loads(out)
+
+def loadSchedule(tasks: [Task], days: [Day], debug=False) -> Schedule:
+    scheduleMetaData = load("schedule")
+    created = arrow.get(scheduleMetaData["created"], "DD.MM.YYYY HH:mm")
+    lastWorkConfirmed = arrow.get(scheduleMetaData["lastWorkConfirmed"], "DD.MM.YYYY HH:mm")
+    return calculateSchedule(tasks, days, created, lastWorkConfirmed=lastWorkConfirmed)

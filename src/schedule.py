@@ -4,10 +4,18 @@ from datetime import date
 from task import Task
 from timeslot import TimeSlot
 from customtime import Time
+import arrow
 import util
 
 class Schedule():
-    def __init__(self, days: [Day]):
+    def __init__(self, days: [Day], lastWorkConfirmed: arrow.Arrow, created=None):
+        self.lastWorkConfirmed = lastWorkConfirmed
+
+        if created is None:
+            self.created = arrow.now()
+        else:
+            self.created = created
+        
         self.__days = [day.copy() for day in days] # Deepcopy
 
     def addDay(self, day: Day):
@@ -98,3 +106,12 @@ class Schedule():
 
     def __repr__(self) -> str:
         return f"Schedule ({self.__days[0].date} - {self.__days[-1].date})\n" + "\n".join([repr(day) for day in self.__days])
+
+    def export(self) -> {}:
+        return {
+            "created" : util.formatDate(self.created), # The schedule is built anew whenever requested, so this will be updated
+            "lastWorkConfirmed" : util.formatDate(self.lastWorkConfirmed) # This is a pointer to the last time that the user confirmed a work block. Users should be prompted to confirm past work blocks when initialising the schedule
+        }
+
+    def recentlyCompleted(self) -> {}:
+        return {}
