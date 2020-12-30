@@ -21,7 +21,7 @@ class TimeSlot(Comparable):
     def __init__(self, start: Time, end: Time, temporary=False):
         self.__start = start
         self.__end = end
-        self.task = None # Not persisted
+        self.taskOrAppointment = None # Not persisted. Must support .copy() and .name
         self.temporary = temporary
         if self.startTime > self.endTime:
             raise ValueError(f"Start date cannot be after the end date! {self.startTime} was before {self.endTime}")
@@ -29,19 +29,19 @@ class TimeSlot(Comparable):
             raise ValueError(f"Start date cannot be equal to the end date! {self.startTime} was equal to {self.endTime}")
     
     @property
-    def startTimeString(self):
+    def startTimeString(self) -> str:
         return f"{self.__start.hours:02}:{self.__start.minutes:02}"
 
     @property
-    def startTime(self):
+    def startTime(self) -> Time:
         return self.__start
 
     @property
-    def endTimeString(self):
+    def endTimeString(self) -> str:
         return f"{self.__end.hours:02}:{self.__end.minutes:02}"
 
     @property
-    def endTime(self):
+    def endTime(self) -> Time:
         return self.__end
 
     def timeInMinutes(self) -> int:
@@ -51,6 +51,10 @@ class TimeSlot(Comparable):
     def durationInMinutes(self) -> int:
         return self.timeInMinutes()
 
+    @property
+    def timeSlotString(self) -> str:
+        return f"{self.startTimeString} - {self.endTimeString}"
+
     def export(self) -> dict:
         return {
             "startTime" : self.startTimeString,
@@ -58,10 +62,10 @@ class TimeSlot(Comparable):
         }
 
     def __repr__(self) -> str:
-        if self.task is None:
+        if self.taskOrAppointment is None:
             return f"{self.startTimeString} - {self.endTimeString} <empty>"
         else:
-            return f"{self.startTimeString} - {self.endTimeString} ({self.task.name})"
+            return f"{self.startTimeString} - {self.endTimeString} ({self.taskOrAppointment.name})"
 
     def __eq__(self, other) -> bool:
         return self.startTime == other.startTime and self.endTime == other.endTime
@@ -127,3 +131,9 @@ class TimeSlot(Comparable):
 
     def copy(self): # The task-reference is NOT COPIED
         return TimeSlot.fromDict(self.export())
+
+    def fullCopy(self): # The task-reference IS copied
+        cp = TimeSlot.fromDict(self.export())
+        if self.taskOrAppointment is not None:
+            cp.taskOrAppointment = self.taskOrAppointment.copy()
+        return cp

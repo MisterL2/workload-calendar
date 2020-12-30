@@ -4,22 +4,34 @@ class Appointment():
     @staticmethod
     def fromDict(valueDict: dict):
         name = valueDict["name"]
+        task = valueDict["task"]
         timeSlot = TimeSlot.fromDict(valueDict["timeSlot"])
-        return Appointment(name, timeSlot)
+        return Appointment(name, timeSlot, task=task)
 
-    def __init__(self, name: str, timeSlot: TimeSlot):
+    def __init__(self, name: str, timeSlot: TimeSlot, task=None):
+        self.task = task # If the appointment belong to a task
         self.name = name
         self.timeSlot = timeSlot
+        if task is not None:
+            self.timeSlot.task = task
+        else:
+            self.timeSlot.task = self # Infinite recursion
 
     def overlaps(self, other) -> bool:
         return self.timeSlot.overlaps(other.timeSlot)
 
     def export(self) -> dict:
         return {
+            "task" : self.task,
             "name" : self.name,
             "timeSlot" : self.timeSlot.export()
         }
 
+    def __eq__(self, other) -> bool:
+        return self.task == other.task and self.name == other.name and self.timeSlot == other.timeSlot
+
     def __repr__(self) -> str:
-        #return f"Appointment[ name='{self.name}', timeSlot='{self.timeSlot}' ]"
-        return f"{self.name} ({self.timeSlot})"
+        if self.task is not None:
+            return f"{self.name} ({self.task})"
+        else:
+            return f"{self.name}"

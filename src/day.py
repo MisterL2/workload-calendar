@@ -40,6 +40,19 @@ class Day(Comparable):
     def dateString(self):
         return util.dateString(self.date)
 
+    # Returns the day's schedule. This means:
+    # 1. Non-Empty TimeSlots (i.e. with a TaskOrAppointment assigned to it)
+    # 2. Appointment-TimeSlots
+    @property
+    def daySchedule(self) -> [TimeSlot]:
+        schedule = [ts.fullCopy() for ts in self.timeSlots if ts.taskOrAppointment is not None]
+        for app in self.appointments:
+            appts = app.timeSlot.copy() # Does not include TaskOrAppointment reference
+            appts.taskOrAppointment = app 
+            schedule.append(appts)
+        return sorted(schedule, key=lambda ts: ts.startTime)
+
+
     def freeTimeSlots(self, before=None, after=None) -> [TimeSlot]: # Returns a NEW DEEPCOPIED LIST containing new objects / copies
         # At this point, priority could be used to determine if appointments should get thrown out
         blocking_appointments = self.appointments.copy()
@@ -55,8 +68,8 @@ class Day(Comparable):
 
         freeSlots = []
         for timeSlot in self.timeSlots:
-            # TimeSlots with a task assigned to it are not free
-            if timeSlot.task is not None:
+            # TimeSlots with a TaskOrAppointment assigned to it are not free
+            if timeSlot.taskOrAppointment is not None:
                 continue
 
             # Calculate overlap with appointments and perhaps split up TimeSlots as necessary
@@ -114,7 +127,7 @@ class Day(Comparable):
         # Find matching TimeSlot
         for ts in self.timeSlots:
             # If already scheduled
-            if ts.task is not None:
+            if ts.taskOrAppointment is not None:
                 continue
 
             # If the TimeSlot includes the startTime/endTime (i.e. Scenario [{}])
@@ -124,7 +137,7 @@ class Day(Comparable):
 
                 # Add the task to it
                 timeSlotToBeScheduled = newTimeSlot.copy()
-                timeSlotToBeScheduled.task = task
+                timeSlotToBeScheduled.taskOrAppointment = task
 
                 # Calculate the nonOverlap of the existing TimeSlot with the new one. For example:
                 # If they are identical, newTimeSlots = []
@@ -160,6 +173,10 @@ class Day(Comparable):
 
     def copy(self): # Is a deepcopy
         return Day.fromDict(self.export())
+
+    def display(self) -> str:
+        dayScheduleString = "\n".join([repr(t) for t in self.daySchedule])
+        return f"{self.dateString} ({self.timeInMinutes()/60:.1f} h)\n{dayScheduleString}"
 
     def __repr__(self) -> str:
         timeSlotString = "; ".join([repr(t) for t in self.timeSlots])
