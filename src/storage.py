@@ -5,11 +5,24 @@ from day import Day
 from timeslot import TimeSlot
 from schedule import Schedule
 from schedule_alg import calculateSchedule
+from scheduleexceptions import ImpossibleScheduleException
+from customtime import Time
+import util
 
 # Save
 
 def saveConfig(config: {}):
-    save(config, "config")
+    exportedConfig = {}
+    for key in config.keys():
+        if key == "recurringTasks":
+            exportedRecurringTasks = []
+            for recurringTaskDict in config[key]:
+                exportedRecurringTaskDict = {"task" : recurringTaskDict["task"].export(), "interval" : recurringTaskDict["interval"], "startDate": util.dateString(recurringTaskDict["startDate"])}
+                exportedRecurringTasks.append(exportedRecurringTaskDict)
+            exportedConfig[key] = exportedRecurringTasks
+            continue
+        exportedConfig[key] = config[key]
+    save(exportedConfig, "config")
 
 def saveTasks(tasks: [Task]):
     parsedTasks = [task.export() for task in tasks]
@@ -21,6 +34,8 @@ def saveDays(days: [Day]):
     save(parsedDays, "days")
 
 def saveSchedule(schedule: Schedule):
+    if schedule is None:
+        save({"created" : None, "lastWorkConfirmed" : None}, "schedule")
     save(schedule.export(), "schedule")
 
 def save(data, fileName: str):
@@ -39,7 +54,7 @@ def initDays(config: {}) -> [Day]:
     # Create new days to remain at 1000 day threshold (20 for debug)
 
     # dayCount = 1000 # Real
-    dayCount = 20 # Debug
+    dayCount = 100 # Debug
     daysToCreate = dayCount - len(days)
     if days:
         startDate = days[-1].date
@@ -49,7 +64,7 @@ def initDays(config: {}) -> [Day]:
     currentDate = arrow.get(startDate)
     for _ in range(daysToCreate): # Fill up days to get up to dayCount
         currentDate = currentDate.shift(days=1)
-        newDay = Day(currentDate, [], [])
+        newDay = Day(currentDate.date(), [], [])
         days.append(newDay)
 
     # Load config-TimeSlots onto days if they don't exist already
@@ -84,13 +99,22 @@ def initConfig() -> {}:
 
     defaults = {
         "weekdayTimeSlots" : [],
-        "weekendTimeSlots" : []
+        "weekendTimeSlots" : [],
+        "recurringTasks" : []
     }
 
     # Fill missing keys with defaults
     for defaultKey in defaults.keys():
         if defaultKey not in config.keys():
             config[defaultKey] = defaults[defaultKey]
+
+    # Import serialized objects
+    newRecurringTasks = []
+    for recurringTaskDict in config["recurringTasks"]:
+        newRecurringTaskDict = {"task" : Task.fromDict(recurringTaskDict["task"]), "interval" : recurringTaskDict["interval"], "startDate" : util.dateStringToArrow(recurringTaskDict["startDate"])}
+        newRecurringTasks.append(newRecurringTaskDict)
+    config["recurringTasks"] = newRecurringTasks
+
     return config
 
 def loadTasks() -> [Task]:
@@ -107,4 +131,9 @@ def loadSchedule(tasks: [Task], days: [Day], debug=False) -> Schedule:
     scheduleMetaData = load("schedule")
     created = arrow.get(scheduleMetaData["created"], "DD.MM.YYYY HH:mm")
     lastWorkConfirmed = arrow.get(scheduleMetaData["lastWorkConfirmed"], "DD.MM.YYYY HH:mm")
-    return calculateSchedule(tasks, days, created, lastWorkConfirmed=lastWorkConfirmed)
+    try:
+        return calculateSchedule(tasks, days, created, lastWorkConfirmed=lastWorkConfirmed)
+    except ImpossibleScheduleException:
+        print("WARNING: Unable to calculate a schedule! Either the tasks are impossible to complete or no TimeSlots have been added yet!")
+        return Schedule(days, lastWorkConfirmed)
+

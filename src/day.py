@@ -171,15 +171,17 @@ class Day(Comparable):
             "special" : self.special
         }
 
-    def copy(self): # Is a deepcopy
-        return Day.fromDict(self.export())
+    def copy(self): # Is a Deepcopy
+        newDay = Day.fromDict(self.export())
+        newDay.timeSlots = [ts.fullCopy() for ts in self.timeSlots] # To avoid temporary tasks from being forgotten during the export
+        return newDay
 
     def detailedView(self) -> str:
-        dayScheduleString = "\n".join([repr(t) for t in self.daySchedule])
+        dayScheduleString = "\n\t".join([repr(t) for t in self.daySchedule])
         if dayScheduleString == "": 
             dayScheduleString = "<<< Nothing scheduled on this day! Enjoy your freedom ;) >>>"
         weekday = self.date.strftime("%A").capitalize()
-        return f"{weekday} {self.dateString} ({self.timeInMinutes()/60:.1f} h)\n{dayScheduleString}"
+        return f"*{weekday} {self.dateString} ({self.timeInMinutes()/60:.1f} h)*\n\t{dayScheduleString}"
 
     def __repr__(self) -> str:
         timeSlotString = "; ".join([repr(t) for t in self.timeSlots])

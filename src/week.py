@@ -5,4 +5,5 @@ class Week():
         self.days = days
 
     def __repr__(self) -> str:
-        pass
+        headline = f"Week ({self.days[0].dateString} - {self.days[-1].dateString})\n"
+        return headline + "\n".join([day.detailedView() for day in self.days])

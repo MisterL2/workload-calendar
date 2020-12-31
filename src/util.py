@@ -20,10 +20,10 @@ def timeParseAsTuple(timeString: str) -> (int, int):
     return hours, minutes
 
 def dateTimeStringToArrow(dateString: str) -> arrow.Arrow:
-    return arrow.get(dateString,"DD.MM.YYYY @ HH:mm")
+    return arrow.get(dateString, "DD.MM.YYYY @ HH:mm")
 
 def dateStringToArrow(dateString: str) -> arrow.Arrow:
-    return arrow.get(dateString,"DD.MM.YYYY")
+    return arrow.get(dateString, "DD.MM.YYYY")
 
 def smoothCurrentArrow() -> arrow.Arrow:
     currentArrow = arrow.now()
@@ -48,8 +48,11 @@ def generateUUID() -> str:
 def arrowToTime(a: arrow.Arrow) -> Time:
     return Time(a.hour, a.minute)
 
-def formatDate(a: arrow.Arrow) -> str:
-    return a.strftime("%d.%m.%Y %H:%M")
+def formatDate(a: arrow.Arrow, time=True) -> str:
+    if time:
+        return a.strftime("%d.%m.%Y %H:%M")
+    else:
+        return a.strftime("%d.%m.%Y")
 
 def getInfinityDate() -> arrow.Arrow:
     return arrow.get("31.12.3999 00:00", "DD.MM.YYYY HH:mm")

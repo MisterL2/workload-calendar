@@ -85,7 +85,7 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: 
         if fullyFree:
             # If area is FREE -> Schedule the highest priority task into that area
             amountOfTimeScheduled += highestPriorityTask.maxRemainingTime
-            happySchedule.scheduleTask(highestPriorityTask, debug=debug) # This mutates the task by adding completionTime to it
+            happySchedule.scheduleTask(highestPriorityTask, start, debug=debug) # This mutates the task by adding completionTime to it
             tmpTasks.remove(highestPriorityTask)
             continue
         else:
@@ -113,7 +113,7 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: 
                     bestOption = sorted(betterOptions, key=getTaskHappySignificance, reverse=True)[0]
 
                     amountOfTimeScheduled += bestOption.maxRemainingTime
-                    happySchedule.scheduleTask(bestOption, debug=debug) # This mutates the task by adding completionTime to it
+                    happySchedule.scheduleTask(bestOption, start, debug=debug) # This mutates the task by adding completionTime to it
                     tmpTasks.remove(bestOption)
                     continue # End this iteration of the while loop here, as a task was already scheduled.
                 
@@ -122,7 +122,7 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: 
             # If free time is > 8h -> Schedule 'closest' (make room for higher priority task later on)
             # If area is NOT FREE -> out of the unfinished deadline tasks, schedule the task with the CLOSEST deadline (if there are several, the highest priority one is picked)
             amountOfTimeScheduled += closest.maxRemainingTime
-            happySchedule.scheduleTask(closest, debug=debug) # This mutates the task "closest" by adding completionTime to it
+            happySchedule.scheduleTask(closest, start, debug=debug) # This mutates the task "closest" by adding completionTime to it
             tmpTasks.remove(closest)
 
 

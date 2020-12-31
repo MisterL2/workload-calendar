@@ -22,7 +22,7 @@ class Appointment():
 
     def export(self) -> dict:
         return {
-            "task" : self.task,
+            "task" : self.task, # TODO - So far only supports "None" for task. Building persistence / loading for tasks could be tricky. Needs to use uuid reference rather than task copy to avoid going out of sync.
             "name" : self.name,
             "timeSlot" : self.timeSlot.export()
         }

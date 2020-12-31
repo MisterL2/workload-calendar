@@ -9,6 +9,7 @@ from datetime import date
 import storage
 import util
 from schedule_alg import calculateSchedule
+from scheduleexceptions import DateNotFoundException
 
 config = storage.initConfig() # Objects are stored in their exported form (dict) in the config
 days = storage.initDays(config)
@@ -134,7 +135,7 @@ def mainMenu():
             elif choice == 2:
                 viewCalendarMenu() 
             elif choice == 3:
-                addTask() 
+                addTaskMenu() 
             elif choice == 4:
                 changeTimeSlotsMenu()
             elif choice == 5:
@@ -148,43 +149,95 @@ def mainMenu():
         except KeyboardInterrupt:
             print("Aborted by user.")
             
-
-
-def addTask():
-    try:
-        name = input("Please enter the task name: ")
-        minTime = floatInput("How much time does this task require AT LEAST (hours)? ") * 60
-        maxTime = floatInput("How much time does this task require AT MOST (hours)? ") * 60
-
-        priority = intput("Please enter a priority for this task (from 1 to 10): ", error="This is not a valid number! Please enter a valid whole number.")
-
-        deadline = dayDateInput("Please enter the DAY ([DATEFORMAT]) of the deadline: ")
-        time = timeInput("Please enter the TIME (HH:MM) of the deadline: ")
-        deadline = deadline.shift(hours=time.hours, minutes=time.minutes)
-
-        minBlock = intput("What is the smallest block size that this task can be split up into (minutes)? ", "Invalid time! Please enter a valid whole number.")
-        deadline = util.dateString(deadline, time=True)
-        task = Task(util.generateUUID(), name, minTime, maxTime, priority, deadline, minBlock)
-        tasks.append(task)
+def addTaskMenu():
+    while True:
+        autosave()
+        print("1) Task WITH deadline")
+        print("2) Task WITHOUT deadline")
+        print("3) Recurring (i.e. weekly) Task")
+        print("9) Back to Main Menu")
+        choice = intput("", "Not a valid number!")
         
-        print("Task added successfully!")
+        if choice == 1:
+            addTask(hasDeadline=True)
+        elif choice == 2:
+            addTask(hasDeadline=False)
+        elif choice == 3:
+            addIntervalTaskToConfig()
+        elif choice == 9:
+            return
+        else:
+            print("Invalid number!")
 
+def addIntervalTaskToConfig():
+    try:
+        task = taskInput(hasDeadline=False)
+        startDay = dayDateInput("What is the START date of this repeating task? ")
+        while True:
+            intervalDays = intput("What is the interval (days) that this task repeats in (weekly=7)? ", error="Please enter a valid number")
+            if intervalDays < 1:
+                print("The interval must be at least 1 day")
+            else:
+                break
+        
+        config["recurringTasks"].append({"task" : task, "interval" : intervalDays, "startDate": startDay})
+        print("Repeating Task added successfully!")
+    except KeyboardInterrupt:
+        print("Aborted by user. Returning to main menu")
+
+def addTask(hasDeadline=True):
+    try:
+        task = taskInput(hasDeadline=hasDeadline)
+        tasks.append(task)
+        print("Task added successfully!")
     except KeyboardInterrupt:
         print("Aborted by user. Returning to main menu")
 
 
+def taskInput(hasDeadline=True) -> Task:
+    name = input("Please enter the task name: ")
+    minTime = floatInput("How much time does this task require AT LEAST (hours)? ") * 60
+    maxTime = floatInput("How much time does this task require AT MOST (hours)? ") * 60
+
+    priority = intput("Please enter a priority for this task (from 1 to 10): ", error="This is not a valid number! Please enter a valid whole number.")
+
+    if hasDeadline:
+        deadline = dayDateInput("Please enter the DAY ([DATEFORMAT]) of the deadline: ")
+        time = timeInput("Please enter the TIME (HH:MM) of the deadline: ")
+        deadline = arrow.get(deadline).shift(hours=time.hours, minutes=time.minutes)
+    else:
+        deadline = None
+
+    minBlock = intput("What is the smallest block size that this task can be split up into (minutes)? ", "Invalid time! Please enter a valid whole number.")
+    
+    return Task(util.generateUUID(), name, minTime, maxTime, priority, deadline, minBlock)
+
 def showActiveTasks(): 
     print("=================================")
-    if tasks:
-        for task in tasks:
-            showTaskSummary(task)
+    if tasks or config["recurringTasks"]:
+        if tasks:
+            print("Regular Tasks:")
+            for task in tasks:
+                print(showTaskSummary(task))
+        else:
+            print("~~~No regular Tasks~~~")
+        
+        if config["recurringTasks"]:
+            print("Recurring Tasks:")
+            for recurringTaskDict in config["recurringTasks"]:
+                print(f"{showTaskSummary(recurringTaskDict['task'],recurring=True)} (Interval: {recurringTaskDict['interval']} days) from {util.dateString(recurringTaskDict['startDate'])}")
+        else:
+            print("~~~No recurring Tasks~~~")        
     else:
         print("You have no active tasks!")
     print("=================================")
 
-def showTaskSummary(task: Task):
+def showTaskSummary(task: Task, recurring=False) -> str:
     # To do - show progress in ascii art, etc etc
-    print(task)
+    if recurring:
+        return task.displayRecurringTask()
+    else:
+        return repr(task)
 
 def showDays(): # Debug
     for day in days:
@@ -292,8 +345,14 @@ def changeTimeSlotsMenu():
         autosave()
         print("1) Add Weekday TimeSlot")
         print("2) Add Weekend TimeSlot")
-        print("3) Remove Weekday TimeSlot")
-        print("4) Remove Weekend TimeSlot")
+        if len(config["weekdayTimeSlots"]) > 0:
+            print("3) Remove Weekday TimeSlot")
+        else:
+            print("3) Remove Weekday TimeSlot *not available/no weekday timeslots*")
+        if len(config["weekendTimeSlots"]) > 0:
+            print("4) Remove Weekend TimeSlot")
+        else:
+            print("4) Remove Weekend TimeSlot *not available/no weekend timeslots*")
         print("9) Back to Main Menu")
         choice = intput("", "Not a valid number!")
         
@@ -301,9 +360,9 @@ def changeTimeSlotsMenu():
             addTimeSlot(weekday=True)
         elif choice == 2:
             addTimeSlot(weekday=False)
-        elif choice == 3:
+        elif choice == 3 and len(config["weekdayTimeSlots"]) > 0:
             removeTimeSlot(weekday=True)
-        elif choice == 4:
+        elif choice == 4 and len(config["weekendTimeSlots"]) > 0:
             removeTimeSlot(weekday=False)
         elif choice == 9:
             return
@@ -365,15 +424,21 @@ def displayToday():
     displayScheduleDay(arrow.now().date())
 
 def displayScheduleDay(date: date):
-    day = schedule.getDay(date)
-    print(day.detailedView())
+    try:
+        day = schedule.getDay(date)
+        print(day.detailedView())
+    except DateNotFoundException as e:
+        print(e)
 
 def showCurrentWeek():
     showWeek(arrow.now().date())
 
 def showWeek(anyDateOfThatWeek: date):
-    week = schedule.getWeek(anyDateOfThatWeek)
-    # TODO: Print week nicely
+    try:
+        week = schedule.getWeek(anyDateOfThatWeek)
+        print(week)
+    except DateNotFoundException as e:
+        print(e)
 
 def viewCalendarMenu():
     while True:

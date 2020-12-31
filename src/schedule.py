@@ -4,6 +4,7 @@ from datetime import date
 from task import Task
 from timeslot import TimeSlot
 from customtime import Time
+from scheduleexceptions import DateNotFoundException, ImpossibleScheduleException
 import arrow
 import util
 
@@ -29,58 +30,84 @@ class Schedule():
             if day.date == date:
                 return day
 
-        raise IndexError("No day with this date found!")
+        raise DateNotFoundException("No day with this date found!")
 
     def getWeek(self, anyDateOfThatWeek: date) -> Week:
-        # If the date is in the past (make sure NOT to exclude 00:00h on TODAY), move forward till you find a day that isn't.
-        # If the date is not a monday, go back till you find a monday. That is the startdate.
-        # If, while going back, you meet the current date/time, stop there and only display the week partially, starting from that date.
-        pass
+        if anyDateOfThatWeek < self.__days[0].date: # Before the first day of the schedule, not including today
+            raise DateNotFoundException("This week is before the start of the schedule!")
+        elif anyDateOfThatWeek > self.__days[-1].date: # After the last day of the schedule
+            raise DateNotFoundException("This week is after the end of the schedule!")
 
-    def scheduleTask(self, task: Task, minutes=None, debug=False):
+        startDate = arrow.get(anyDateOfThatWeek).shift(days=-anyDateOfThatWeek.weekday()).date() # Move backwards to the next monday (no shift is done if anyDateOfThatWeek is a monday)
+
+        if startDate < self.__days[0].date: # If the lower limit is reached, start the week with the first day. In this case, the week doesn't go from monday-sunday but from the first day to sunday
+            startDate = self.__days[0].date
+
+        currentWeekday = startDate.weekday() # In most cases this is 7, but if the startDate is mid-week this will have a value
+        startIndex = 0
+        for i, day in enumerate(self.__days):
+            if day.date == startDate:
+                startIndex = i
+                break
+
+        weekDays = [day.copy() for day in self.__days[startIndex : startIndex + (7 - currentWeekday)]] # All days from startDate to the next sunday
+
+        return Week(weekDays)
+
+    def scheduleTask(self, task: Task, start: arrow.Arrow, minutes=None, debug=False):
         # TODO: Consider minBlock
-
+        
         if minutes is None:
             minutesToSchedule = task.maxRemainingTime
         else:
             minutesToSchedule = minutes
+
 
         if debug:
             print(f"Schedule is scheduling {minutesToSchedule}min for task {task}")
 
         scheduledMinutes = 0
 
-        currentArrow = util.smoothCurrentArrow()
-        currentDate = currentArrow.date()
-        currentTime = util.arrowToTime(currentArrow)
+        startTime = util.arrowToTime(start)
 
         for day in self.__days:
+            if debug:
+                print("\n")
+                print(day, end=" -> ")
             if task.maxRemainingTime == 0 or minutesToSchedule == scheduledMinutes:
+                if debug: print("A", end="")
                 return
 
-            # Skip days in the past
-            if day.date < currentDate:
+            # Skip days prior to the startDate
+            if day.date < start.date():
+                if debug: print("B", end="")
                 continue
 
-            # For the current day, consider only the times that lie in the future
-            if day.date == currentDate:
-                freeTimeSlots = day.freeTimeSlots(after=currentTime)
+            # For the start day, consider only the times that lie after the start time
+            if day.date == start.date():
+                if debug: print("C", end="")
+                freeTimeSlots = day.freeTimeSlots(after=startTime)
 
             # Days in the future
-            if day.date > currentDate:
+            if day.date > start.date():
+                if debug: print("D", end="")
                 freeTimeSlots = day.freeTimeSlots()
 
             if len(freeTimeSlots) == 0:
+                if debug: print("E", end="")
                 continue
 
             # For the valid TimeSlots of the future, fill them with the task until they are either all filled or "minutesToSchedule" minutes are scheduled
             for ts in freeTimeSlots:
+                if debug: print("F", end="")
 
                 if task.maxRemainingTime == 0 or minutesToSchedule == scheduledMinutes:
+                    if debug: print("G", end="")
                     return
 
                 # If TimeSlot is <= to what still needs to be scheduled, fill it completely
                 if ts.durationInMinutes <= (minutesToSchedule - scheduledMinutes):
+                    if debug: print("H", end="")
                     # Schedule the Task
                     day.scheduleTask(ts, task, debug=debug)
 
@@ -89,6 +116,7 @@ class Schedule():
                     scheduledMinutes += ts.durationInMinutes
 
                 else: # If TimeSlot is bigger than what needs to be scheduled, fill the first section of it (until "minutesToSchedule" minutes are scheduled)
+                    if debug: print("I", end="")
                     # Build the Partial TimeSlot
                     remainingMinutesToSchedule = minutesToSchedule - scheduledMinutes
                     length = Time.fromMinutes(remainingMinutesToSchedule)
@@ -101,11 +129,11 @@ class Schedule():
                     task.addCompletionTime(partialTimeSlot.durationInMinutes) # This mutates the ORIGINAL TASK
                     scheduledMinutes += partialTimeSlot.durationInMinutes # Unnecessary. ScheduledMinutes will == MinutesToSchedule after this every time.
                     return # Since the TimeSlot was bigger than the remaining minutesToSchedule, we are done here now.
-        raise Exception("Unable to schedule task!")
+        raise ImpossibleScheduleException("Unable to schedule task!")
 
 
     def __repr__(self) -> str:
-        return f"Schedule ({self.__days[0].date} - {self.__days[-1].date})\n" + "\n".join([repr(day) for day in self.__days])
+        return f"Schedule ({util.formatDate(self.__days[0].date, time=False)} - {util.formatDate(self.__days[-1].date, time=False)}\n" + "\n".join([repr(day) for day in self.__days])
 
     def export(self) -> {}:
         return {

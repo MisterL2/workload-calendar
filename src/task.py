@@ -15,8 +15,8 @@ class Task:
             "uuid": uuidString,
             "name" : name,
             "completedTime" : completedTime,
-            "minTime" : minTimeMinutes, # In Minutes
-            "maxTime" : maxTimeMinutes, # In Minutes
+            "minTime" : int(minTimeMinutes), # In Minutes
+            "maxTime" : int(maxTimeMinutes), # In Minutes
             "priority" : priority,
             "deadline" : util.dateString(self.__deadlineArrow, time=True),
             "minBlock" : minBlock  # If this is 120, it means that this task should not be split up into chunks smaller than 120mins.
@@ -112,8 +112,11 @@ class Task:
     def fitsIn(self, timeslot):
         return timeslot.timeInMinutes() >= self.minBlock
 
+    def displayRecurringTask(self) -> str:
+        return f"{self.name} ({round(self.maxTime/60,1)} h) [Prio: {self.priority}] Progress: {self.progressPercentage}"
+
     def __repr__(self) -> str:
-        if self.hasDeadline:
+        if self.hasDeadline():
             return f"{self.name} ({round(self.maxTime/60,1)} h) [Prio: {self.priority}] Deadline: {util.formatDate(self.deadline)} Progress: {self.progressPercentage}"
         else:
             return f"{self.name} ({round(self.maxTime/60,1)} h) [Prio: {self.priority}] Deadline: <None> Progress: {self.progressPercentage}"
