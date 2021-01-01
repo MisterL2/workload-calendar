@@ -62,7 +62,16 @@ def initDays(config: {}) -> [Day]:
         startDate = arrow.now().date()
 
     currentDate = arrow.get(startDate)
-    for _ in range(daysToCreate): # Fill up days to get up to dayCount
+
+    # Check if the current day is missing and add it if necessary
+    for day in days:
+        if day.date == currentDate.date():
+            break
+    else:
+        days.append(Day(currentDate.date(), [], []))
+
+    # Fill up days to get up to dayCount
+    for _ in range(daysToCreate):
         currentDate = currentDate.shift(days=1)
         newDay = Day(currentDate.date(), [], [])
         days.append(newDay)

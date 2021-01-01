@@ -40,7 +40,7 @@ def onInit():
 def confirmRecentWork():
     # Check if any planned tasks/timeslots of the schedule have occurred between the last time work was confirmed
     recentlyCompleted = schedule.recentlyCompleted()
-    print(f"Recently completed: {recentlyCompleted}")
+    #print(f"Recently completed: {recentlyCompleted}")
     if recentlyCompleted:
         print("Please confirm the following schedule events that should have occurred since your last visit (y/n):")
 

@@ -21,24 +21,24 @@ def calculateSchedule(globalDays: [Day], tasks: [Task], currentSchedule: Schedul
 
     days = currentSchedule.days()
     oldDays = [day.copy() for day in days if day.date <= start.date()] # Contains all days PRIOR to start date (last is popped off)
-    lastDay = oldDays.pop() # This day is changed after the current timeslot and kept the same before.
-    
-    splitTime = Time(start.hour, start.minute)
     oldTimeSlots = []
-    for ts in lastDay.timeSlots:
-        if ts.endTime > splitTime and ts.startTime < splitTime:
-            # Update start time to be the end of the current timeslot
-
-            # Update Arrow object only if it isn't before the smoothCurrentArrow()
-            splitArrow = arrow.Arrow(start.year, start.month, start.day, hour=ts.endTime.hours, minute=ts.endTime.minutes)
-            if splitArrow >= currentTime:
-                start = splitArrow
-                splitTime = Time(start.hour, start.minute)
+    if oldDays: # On initial creation, there are no old days
+        lastDay = oldDays.pop() # This day is changed after the current timeslot and kept the same before.
+        splitTime = Time(start.hour, start.minute)
         
-        if ts.startTime < splitTime and ts.taskOrAppointment is not None:
-            oldTimeSlots.append(ts)
+        for ts in lastDay.timeSlots:
+            if ts.endTime > splitTime and ts.startTime < splitTime:
+                # Update start time to be the end of the current timeslot
 
-    print(oldTimeSlots)    
+                # Update Arrow object only if it isn't before the smoothCurrentArrow()
+                splitArrow = arrow.Arrow(start.year, start.month, start.day, hour=ts.endTime.hours, minute=ts.endTime.minutes)
+                if splitArrow >= currentTime:
+                    start = splitArrow
+                    splitTime = Time(start.hour, start.minute)
+            
+            if ts.startTime < splitTime and ts.taskOrAppointment is not None:
+                oldTimeSlots.append(ts)
+
 
     startIndex = None
     for i, day in enumerate(globalDays):
@@ -52,17 +52,17 @@ def calculateSchedule(globalDays: [Day], tasks: [Task], currentSchedule: Schedul
 
     # Remove TimeSlots prior to start
     firstNewDay = newDays[0]
-    print(firstNewDay)
+
     oldTimeSlotsToRemove = []
     for ts in firstNewDay.timeSlots:
         if ts.startTime < splitTime:
             oldTimeSlotsToRemove.append(ts)
     for otstr in oldTimeSlotsToRemove:
         firstNewDay.timeSlots.remove(otstr)
-    print(firstNewDay)
+
     for oldTimeSlot in oldTimeSlots:
         firstNewDay.addTimeSlot(oldTimeSlot)
-    print(firstNewDay)
+    
 
     lastWorkConfirmed = currentSchedule.lastWorkConfirmed
 
