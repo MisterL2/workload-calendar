@@ -25,6 +25,9 @@ class Schedule():
         
         self.__days = [day.copy() for day in days] # Deepcopy
 
+    def days(self):
+        return self.__days
+
     def addDay(self, day: Day):
         for existingDay in self.__days:
             if existingDay.date == day.date:

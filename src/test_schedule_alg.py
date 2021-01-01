@@ -3,6 +3,7 @@ from task import Task
 from day import Day
 from timeslot import TimeSlot
 from appointment import Appointment
+from schedule import Schedule
 import arrow
 import util
 import schedule_alg
@@ -10,6 +11,7 @@ import schedule_alg
 class ScheduleTest(TestCase):
     def test_calculate_Easy_HappySchedule(self): # cEHS
         dates = [arrow.get(f"{i:02}.01.2099", "DD.MM.YYYY").date() for i in range(1, 31)] # 01.01 - 30.01; 240h total
+        lastWorkConfirmed = arrow.get("03.05.2080", "DD.MM.YYYY")
         defaultDays = [Day(d, util.exampleTimeSlots(), [], special=True) for d in dates]
         appointmentDays = [day.copy() for day in defaultDays]
         appointments = [
@@ -27,8 +29,9 @@ class ScheduleTest(TestCase):
         appointmentDays[1].addAppointment(appointments[3])
         appointmentDays[2].addAppointment(appointments[4])
         appointmentDays[3].addAppointment(appointments[5])
+
         paramDictLst = [
-            {"name": "cEHS-0.1a", "days": [day.copy() for day in defaultDays], # Default case; easy deadlines, just schedule due to priority
+            {"name": "cEHS-0.1a", "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), # Default case; easy deadlines, just schedule due to priority
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                     {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
@@ -82,7 +85,7 @@ class ScheduleTest(TestCase):
             },
 
 
-            {"name": "cEHS-0.1b", "days": [day.copy() for day in defaultDays], # Default case; no deadlines, just schedule due to priority
+            {"name": "cEHS-0.1b", "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), # Default case; no deadlines, just schedule due to priority
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": None, "minBlock": 0},
                     {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0, "deadline": None, "minBlock": 0},
@@ -137,7 +140,7 @@ class ScheduleTest(TestCase):
             },
 
 
-            {"name": "cEHS-0.2", "days": [day.copy() for day in defaultDays], # Lowest priority date has a fairly tight deadline and needs to be scheduled first. One date also has a non-zero progress
+            {"name": "cEHS-0.2", "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), # Lowest priority date has a fairly tight deadline and needs to be scheduled first. One date also has a non-zero progress
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("03.01.2099 11:00", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                     {"taskName": "Task #2", "time": 1200, "priority": 8, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
@@ -184,7 +187,7 @@ class ScheduleTest(TestCase):
             },
 
 
-            {"name": "cEHS-0.3", "days": [day.copy() for day in defaultDays], # The low priority task has a moderately tight deadline that either of the higher priority tasks could fill
+            {"name": "cEHS-0.3", "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), # The low priority task has a moderately tight deadline that either of the higher priority tasks could fill
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 14:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                     {"taskName": "Task #2", "time": 1000, "priority": 8, "progress": 0.8, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
@@ -218,7 +221,7 @@ class ScheduleTest(TestCase):
             },
 
 
-            {"name": "cEHS-0.4", "days": [day.copy() for day in defaultDays], # The low priority task has a moderately tight deadline that only the less-significant of the two higher-priority tasks can fill
+            {"name": "cEHS-0.4", "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), # The low priority task has a moderately tight deadline that only the less-significant of the two higher-priority tasks can fill
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 14:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                     {"taskName": "Task #2", "time": 1000, "priority": 8, "progress": 0, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
@@ -261,7 +264,7 @@ class ScheduleTest(TestCase):
             },
 
 
-            {"name": "cEHS-0.5", "days": [day.copy() for day in defaultDays], # A very high priority no-deadline task should be scheduled first, then the two identical-deadline tasks in order of SIGNIFICANCE (prio-6 task has higher significance due to progress) and then the other late-deadline one. Also there are non-zero progress values.
+            {"name": "cEHS-0.5", "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), # A very high priority no-deadline task should be scheduled first, then the two identical-deadline tasks in order of SIGNIFICANCE (prio-6 task has higher significance due to progress) and then the other late-deadline one. Also there are non-zero progress values.
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 4, "progress": 0, "deadline": arrow.get("02.01.2099 14:35", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                     {"taskName": "Task #2", "time": 1200, "priority": 6, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
@@ -303,7 +306,7 @@ class ScheduleTest(TestCase):
             },
 
 
-            {"name": "cEHS-0.6", "days": [day.copy() for day in appointmentDays], # Only appointments
+            {"name": "cEHS-0.6", "schedule": Schedule([day.copy() for day in appointmentDays], lastWorkConfirmed), # Only appointments
                 "tasks": [
                 ],
                 "expected" : [
@@ -337,7 +340,7 @@ class ScheduleTest(TestCase):
             },
 
 
-            {"name": "cEHS-0.7", "days": [day.copy() for day in appointmentDays], # Similar to cEHS-0.5, but with a different list of days (containing appointments)
+            {"name": "cEHS-0.7", "schedule": Schedule([day.copy() for day in appointmentDays], lastWorkConfirmed), # Similar to cEHS-0.5, but with a different list of days (containing appointments)
                 "tasks": [
                     {"taskName": "Task #1", "time": 600, "priority": 4, "progress": 0, "deadline": arrow.get("03.01.2099 11:00", "DD.MM.YYYY HH:mm"), "minBlock": 0},
                     {"taskName": "Task #2", "time": 1200, "priority": 6, "progress": 0.5, "deadline": arrow.get("10.01.2099 12:30", "DD.MM.YYYY HH:mm"), "minBlock": 0},
@@ -404,11 +407,11 @@ class ScheduleTest(TestCase):
                     task.addCompletionTime(taskDict["progress"] * taskDict["time"])
                     tasks.append(task)
                 
-                days = paramDict["days"]
+                schedule = paramDict["schedule"]
 
                 debug = paramDict["name"] == "cEHS-0.8"
 
-                schedule = schedule_alg.calculateSchedule(tasks, days, arrow.Arrow.fromdate(days[0].date), debug=debug)
+                schedule = schedule_alg.calculateSchedule(tasks, schedule, arrow.Arrow.fromdate(schedule.days()[0].date), debug=debug)
 
                 if debug: print(tasks)
                 if debug: print(schedule)
@@ -460,43 +463,45 @@ class ScheduleTest(TestCase):
         deadline = arrow.get("31.01.2099", "DD.MM.YYYY")
         dates = [arrow.get(f"{i:02}.01.2099", "DD.MM.YYYY").date() for i in range(1, 31)] # 01.01 - 30.01; 240h total
         defaultDays = [Day(d, util.exampleTimeSlots(), [], special=True) for d in dates]
+        lastWorkConfirmed = arrow.get("03.05.2080", "DD.MM.YYYY")
+
         paramDictLst = [
-            {"name": "iSSASD-0.1T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSASD-0.1T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0.8},
                 {"time": 1200, "priority": 8, "progress": 0},
                 {"time": 900, "priority": 6, "progress": 0},
                 ]
             },
-            {"name": "iSSASD-0.2T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSASD-0.2T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0},
                 {"time": 600, "priority": 5, "progress": 0.4},
                 {"time": 600, "priority": 7, "progress": 0.1},
                 ]
             },
-            {"name": "iSSASD-0.3T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSASD-0.3T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 6000, "priority": 2, "progress": 0},
                 {"time": 6000, "priority": 5, "progress": 0},
                 {"time": 2400, "priority": 7, "progress": 0},
                 ]
             },
-            {"name": "iSSASD-0.4F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSASD-0.4F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 6000, "priority": 2, "progress": 0},
                 {"time": 6000, "priority": 5, "progress": 0},
                 {"time": 2401, "priority": 7, "progress": 0},
                 ]
             },
-            {"name": "iSSASD-0.5F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSASD-0.5F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 6000, "priority": 2, "progress": 0},
                 {"time": 12000, "priority": 5, "progress": 0}
                 ]
             },
-            {"name": "iSSASD-0.6T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSASD-0.6T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 6000, "priority": 2, "progress": 0},
                 {"time": 6000, "priority": 5, "progress": 0.5}, # So 3000 remaining
                 {"time": 6000, "priority": 7, "progress": 0.8}, # So 1200 remaining
                 ]
             },
-            {"name": "iSSASD-0.7F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSASD-0.7F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 6000, "priority": 2, "progress": 0},
                 {"time": 6000, "priority": 5, "progress": 0.5},
                 {"time": 6000, "priority": 7, "progress": 0},
@@ -513,102 +518,103 @@ class ScheduleTest(TestCase):
                     task.addCompletionTime(taskDict["progress"] * taskDict["time"])
                     tasks.append(task)
                 
-                days = paramDict["days"]
+                schedule = paramDict["schedule"]
 
                 debug = False
-                result = schedule_alg.isSolvable(tasks, days, arrow.Arrow.fromdate(days[0].date), debug=debug)
+                result = schedule_alg.isSolvable(tasks, schedule.days(), arrow.Arrow.fromdate(schedule.days()[0].date), debug=debug)
                 self.assertEqual(result, paramDict["solution"])
 
     def test_isSolvable_Standard_DifferentDeadline(self): # iSSDD
         dates = [arrow.get(f"{i:02}.01.2099", "DD.MM.YYYY").date() for i in range(1, 31)] # 01.01 - 30.01; 240h total
         defaultDays = [Day(d, util.exampleTimeSlots(), [], special=True) for d in dates]
+        lastWorkConfirmed = arrow.get("03.05.2080", "DD.MM.YYYY")
 
         paramDictLst = [
-            {"name": "iSSDD-0.1T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.1T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("02.01.2099 10:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("06.01.2099 14:00", "DD.MM.YYYY HH:mm")},
                 {"time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("04.01.2099 09:30", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.2F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.2F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("03.01.2099 12:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("06.01.2099 14:00", "DD.MM.YYYY HH:mm")},
                 {"time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("04.01.2099 09:00", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.3T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.3T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("05.01.2099 12:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("06.01.2099 14:00", "DD.MM.YYYY HH:mm")},
                 {"time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("07.01.2099 09:30", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.4T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.4T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("03.01.2099 04:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("09.01.2099 00:15", "DD.MM.YYYY HH:mm")},
                 {"time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("04.01.2099 12:45", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.5F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.5F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("03.01.2099 04:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("09.01.2099 00:15", "DD.MM.YYYY HH:mm")},
                 {"time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("04.01.2099 07:15", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.6T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.6T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0.5, "deadline": arrow.get("02.01.2099 16:00", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0.5, "deadline": arrow.get("02.01.2099 15:15", "DD.MM.YYYY HH:mm")},
                 {"time": 900, "priority": 6, "progress": 0, "deadline": arrow.get("08.01.2099 23:15", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.7F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.7F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0.5, "deadline": arrow.get("02.01.2099 15:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0.5, "deadline": arrow.get("02.01.2099 15:45", "DD.MM.YYYY HH:mm")},
                 {"time": 900, "priority": 6, "progress": 0.2, "deadline": arrow.get("04.01.2099 23:15", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.8T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.8T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("10.01.2099 09:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("03.01.2099 14:00", "DD.MM.YYYY HH:mm")},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": arrow.get("03.01.2099 16:00", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-0.9F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-0.9F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("10.01.2099 09:30", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("03.01.2099 15:30", "DD.MM.YYYY HH:mm")},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": arrow.get("03.01.2099 14:30", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-1.0T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-1.0T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": None},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": None},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": None},
                 ]
             },
-            {"name": "iSSDD-1.1T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-1.1T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": None},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("03.01.2099 15:30", "DD.MM.YYYY HH:mm")},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": None},
                 ]
             },
-            {"name": "iSSDD-1.2F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-1.2F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": None},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("02.01.2099 18:30", "DD.MM.YYYY HH:mm")},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": None},
                 ]
             },
-            {"name": "iSSDD-1.3T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-1.3T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0, "deadline": arrow.get("04.01.2099 15:00", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0, "deadline": arrow.get("03.01.2099 12:30", "DD.MM.YYYY HH:mm")},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": None},
                 ]
             },
-            {"name": "iSSDD-1.4T", "solution": True, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-1.4T", "solution": True, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0.7, "deadline": arrow.get("01.01.2099 15:00", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 0.5, "deadline": None},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": arrow.get("01.01.2099 12:30", "DD.MM.YYYY HH:mm")},
                 ]
             },
-            {"name": "iSSDD-1.5F", "solution": False, "days": [day.copy() for day in defaultDays], "tasks": [
+            {"name": "iSSDD-1.5F", "solution": False, "schedule": Schedule([day.copy() for day in defaultDays], lastWorkConfirmed), "tasks": [
                 {"time": 600, "priority": 2, "progress": 0.9, "deadline": arrow.get("01.01.2099 15:00", "DD.MM.YYYY HH:mm")},
                 {"time": 1200, "priority": 8, "progress": 1.0, "deadline": None},
                 {"time": 180, "priority": 6, "progress": 0, "deadline": arrow.get("01.01.2099 11:00", "DD.MM.YYYY HH:mm")},
@@ -626,8 +632,8 @@ class ScheduleTest(TestCase):
                     task.addCompletionTime(taskDict["progress"] * taskDict["time"])
                     tasks.append(task)
                 
-                days = paramDict["days"]
+                schedule = paramDict["schedule"]
 
                 debug = False
-                result = schedule_alg.isSolvable(tasks, days, arrow.Arrow.fromdate(days[0].date), debug=debug)
+                result = schedule_alg.isSolvable(tasks, schedule.days(), arrow.Arrow.fromdate(schedule.days()[0].date), debug=debug)
                 self.assertEqual(result, paramDict["solution"])

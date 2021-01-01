@@ -22,8 +22,11 @@ class AlgTest(TestCase):
         task6 = Task(util.generateUUID(), "Task #6", 10, 10, 7, farAwayDeadline, 30)
         
         # When they are equal, the "larger" name should get selected
-        self.assertEqual(task6, prioritiseTaskHappy(task5, task6))
-        self.assertEqual(task6, prioritiseTaskHappy(task6, task5))
+        higher = task6
+        if task5.uuidInt > task6.uuidInt:
+            higher = task5
+        self.assertEqual(higher, prioritiseTaskHappy(task5, task6))
+        self.assertEqual(higher, prioritiseTaskHappy(task6, task5))
 
     def test_B(self):
         testParameterDictLst = [

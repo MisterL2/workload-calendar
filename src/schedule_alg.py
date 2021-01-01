@@ -14,7 +14,9 @@ import util
 # "Sad" -> Not every Task can be completed, so some tasks must be sacrificed
 
 # This is the MAIN function that is called, which delegates to all the other functions
-def calculateSchedule(tasks: [Task], days: [Day], start: arrow.Arrow, lastWorkConfirmed=None, debug=False) -> Schedule:
+def calculateSchedule(tasks: [Task], currentSchedule: Schedule, start: arrow.Arrow, lastWorkConfirmed=None, debug=False) -> Schedule:
+    days = currentSchedule.days()
+
     if start < util.smoothCurrentArrow():
         raise Exception("Cannot calculate a schedule for the past")
 
@@ -34,9 +36,10 @@ def calculateSchedule(tasks: [Task], days: [Day], start: arrow.Arrow, lastWorkCo
         return calculateSadSchedule(tmpTasks, tmpDays, lastWorkConfirmed, start, debug=debug)
 
 def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
+    # "start" marks the separation between the past-schedule and new schedule
     for tmpTask in tmpTasks:
         if tmpTask.maxRemainingTime <= 0:
-            raise Exception(f"Already completed tmpTask! MaxRemainingTime: {tmpTask.maxRemainingTime}")
+            print(f"WARNING: Already completed tmpTask! MaxRemainingTime: {tmpTask.maxRemainingTime}")
 
     if debug:
         print("TmpTasks (at start of calculateHappySchedule):")
@@ -88,7 +91,7 @@ def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: 
         if fullyFree:
             # If area is FREE -> Schedule the highest priority task into that area
             amountOfTimeScheduled += highestPriorityTask.maxRemainingTime
-            happySchedule.scheduleTask(highestPriorityTask, start, debug=debug) # This mutates the task by adding completionTime to it
+            happySchedule.scheduleTask(highestPriorityTask, start, debug=debug) # This mutates the tmpTask by adding completionTime to it
             tmpTasks.remove(highestPriorityTask)
             continue
         else:
@@ -172,7 +175,7 @@ def unfinishedDeadlineTasks(tasks: [Task]) -> [Task]:
 def isSolvable(tasks: [Task], days: [Day], start: arrow.Arrow, useMinimum=False, debug=False) -> bool:
     if start < util.smoothCurrentArrow():
         raise Exception("Cannot calculate a schedule for the past")
-    
+
     # Is used to solve a schedule from a past standpoint, i.e. where start < current. This is used for recreating a past schedule for example.
     sortedTasks = sorted(unfinishedDeadlineTasks(tasks), key=lambda task: task.deadline)
     sortedDays = sorted(days, key=lambda day: day.date)
