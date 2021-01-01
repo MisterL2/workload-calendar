@@ -9,6 +9,12 @@ import arrow
 import util
 
 class Schedule():
+    @staticmethod
+    def fromDict(valueDict: {}, globalTasks: [Task]):
+        created, lastWorkConfirmed, scheduleDays = util.dateStringToArrow(valueDict["created"]), util.dateStringToArrow(valueDict["lastWorkConfirmed"]), valueDict["scheduleDays"]
+        days = [Day.fromDict(scheduleDayDict, globalTasks=globalTasks) for scheduleDayDict in scheduleDays]
+        return Schedule(days, lastWorkConfirmed, created=created)
+
     def __init__(self, days: [Day], lastWorkConfirmed: arrow.Arrow, created=None):
         self.lastWorkConfirmed = lastWorkConfirmed
 
@@ -137,9 +143,11 @@ class Schedule():
 
     def export(self) -> {}:
         return {
+            "scheduleDays" : [day.export(forSchedule=True) for day in self.__days],
             "created" : util.formatDate(self.created), # The schedule is built anew whenever requested, so this will be updated
             "lastWorkConfirmed" : util.formatDate(self.lastWorkConfirmed) # This is a pointer to the last time that the user confirmed a work block. Users should be prompted to confirm past work blocks when initialising the schedule
         }
 
     def recentlyCompleted(self) -> {}:
+        #raise Exception("TBD in schedule")
         return {}

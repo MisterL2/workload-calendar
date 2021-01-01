@@ -8,9 +8,9 @@ from task import Task
 
 class Day(Comparable):
     @staticmethod
-    def fromDict(valueDict: dict):
+    def fromDict(valueDict: dict, globalTasks=None):
         parsedDate = util.dateStringToArrow(valueDict["dateString"]).date()
-        timeSlots = [TimeSlot.fromDict(t) for t in valueDict["timeSlots"]]
+        timeSlots = [TimeSlot.fromDict(t, globalTasks=globalTasks) for t in valueDict["timeSlots"]]
         appointments = [Appointment.fromDict(appDict) for appDict in valueDict["appointments"]]
         isSpecial = valueDict["special"]
         return Day(parsedDate, timeSlots, appointments, special=isSpecial)
@@ -163,10 +163,10 @@ class Day(Comparable):
         self.special = False
         # Re-add all temporary timeslots (This is done in the "ui.py" LUL)
 
-    def export(self) -> dict:
+    def export(self, forSchedule=False) -> dict:
         return {
             "dateString" : self.dateString,
-            "timeSlots" : [ts.export() for ts in self.timeSlots if not ts.temporary],
+            "timeSlots" : [ts.export(forSchedule=forSchedule) for ts in self.timeSlots if (not ts.temporary) or forSchedule], # If forSchedule, export all. Otherwise export only non-temporary
             "appointments" : [app.export() for app in self.appointments],
             "special" : self.special
         }

@@ -13,15 +13,25 @@ class TimeSlot(Comparable):
         return TimeSlot(util.timeParse(start), util.timeParse(end), temporary=temporary)
 
     @staticmethod
-    def fromDict(valueDict: dict, temporary=False):
+    def fromDict(valueDict: dict, temporary=False, globalTasks=None):
+        task = None
+        if globalTasks:
+            taskUUID = valueDict["taskUUID"]
+            if taskUUID:
+                for globalTask in globalTasks:
+                    if globalTask.uuid == taskUUID:
+                        task = globalTask
+                        break
+                else:
+                    raise Exception(f"Unable to match Task with UUID: {taskUUID}")
         startTimeString = valueDict['startTime']
         endTimeString = valueDict['endTime']
-        return TimeSlot(util.timeParse(startTimeString), util.timeParse(endTimeString), temporary=temporary)
+        return TimeSlot(util.timeParse(startTimeString), util.timeParse(endTimeString), temporary=temporary, taskOrAppointment=task)
 
-    def __init__(self, start: Time, end: Time, temporary=False):
+    def __init__(self, start: Time, end: Time, temporary=False, taskOrAppointment=None):
         self.__start = start
         self.__end = end
-        self.taskOrAppointment = None # Not persisted. Must support .copy() and .name
+        self.taskOrAppointment = taskOrAppointment # Only persisted in schedule. Must support .copy() and .name
         self.temporary = temporary
         if self.startTime > self.endTime:
             raise ValueError(f"Start date cannot be after the end date! {self.startTime} was before {self.endTime}")
@@ -55,11 +65,18 @@ class TimeSlot(Comparable):
     def timeString(self) -> str:
         return f"{self.startTimeString} - {self.endTimeString}"
 
-    def export(self) -> dict:
-        return {
-            "startTime" : self.startTimeString,
-            "endTime" : self.endTimeString
-        }
+    def export(self, forSchedule=False) -> dict:
+        if forSchedule:
+            return {
+                "startTime" : self.startTimeString,
+                "endTime" : self.endTimeString,
+                "taskUUID" : self.taskOrAppointment.uuid if self.taskOrAppointment is not None else None
+            }
+        else:
+            return {
+                "startTime" : self.startTimeString,
+                "endTime" : self.endTimeString
+            }
 
     def __repr__(self) -> str:
         if self.taskOrAppointment is None:

@@ -127,13 +127,7 @@ def load(name: str):
         out = f.read()
     return json.loads(out)
 
-def loadSchedule(tasks: [Task], days: [Day], debug=False) -> Schedule:
-    scheduleMetaData = load("schedule")
-    created = arrow.get(scheduleMetaData["created"], "DD.MM.YYYY HH:mm")
-    lastWorkConfirmed = arrow.get(scheduleMetaData["lastWorkConfirmed"], "DD.MM.YYYY HH:mm")
-    try:
-        return calculateSchedule(tasks, days, created, lastWorkConfirmed=lastWorkConfirmed)
-    except ImpossibleScheduleException:
-        print("WARNING: Unable to calculate a schedule! Either the tasks are impossible to complete or no TimeSlots have been added yet!")
-        return Schedule(days, lastWorkConfirmed)
+def loadSchedule(globalTasks: [Task], days: [Day], debug=False) -> Schedule:
+    scheduleDict = load("schedule")
+    return Schedule.fromDict(scheduleDict, globalTasks)
 

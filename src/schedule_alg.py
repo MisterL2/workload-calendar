@@ -15,6 +15,9 @@ import util
 
 # This is the MAIN function that is called, which delegates to all the other functions
 def calculateSchedule(tasks: [Task], days: [Day], start: arrow.Arrow, lastWorkConfirmed=None, debug=False) -> Schedule:
+    if start < util.smoothCurrentArrow():
+        raise Exception("Cannot calculate a schedule for the past")
+
     if lastWorkConfirmed is None:
         lastWorkConfirmed = start.clone()
     
@@ -167,6 +170,9 @@ def unfinishedDeadlineTasks(tasks: [Task]) -> [Task]:
     return list(filter(lambda task: task.hasDeadline() and task.maxRemainingTime > 0, tasks))
 
 def isSolvable(tasks: [Task], days: [Day], start: arrow.Arrow, useMinimum=False, debug=False) -> bool:
+    if start < util.smoothCurrentArrow():
+        raise Exception("Cannot calculate a schedule for the past")
+    
     # Is used to solve a schedule from a past standpoint, i.e. where start < current. This is used for recreating a past schedule for example.
     sortedTasks = sorted(unfinishedDeadlineTasks(tasks), key=lambda task: task.deadline)
     sortedDays = sorted(days, key=lambda day: day.date)
