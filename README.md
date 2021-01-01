@@ -9,4 +9,6 @@
 
 ## Development Notes
 
-Keep in mind that almost all objects will behave differently depending on whether they are in the context of a calculated schedule or not. This means that they may export more or different values based on an overloaded parameter.
+Keep in mind that almost all objects will behave differently depending on whether they are in the context of a calculated schedule or not. This means that they may export more or different values based on an overloaded parameter.  
+
+Also, copy() may not always copy over all values, as the requirements are context-dependent. In these cases, fullCopy() is supplied. When in doubt, check the implementation.
