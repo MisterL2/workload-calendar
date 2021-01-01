@@ -69,6 +69,7 @@ class Schedule():
 
         return Week(weekDays)
 
+
     def scheduleTask(self, task: Task, start: arrow.Arrow, minutes=None, debug=False):
         # TODO: Consider minBlock
         
