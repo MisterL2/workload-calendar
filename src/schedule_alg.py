@@ -14,8 +14,20 @@ import util
 # "Sad" -> Not every Task can be completed, so some tasks must be sacrificed
 
 # This is the MAIN function that is called, which delegates to all the other functions
-def calculateSchedule(tasks: [Task], currentSchedule: Schedule, start: arrow.Arrow, lastWorkConfirmed=None, debug=False) -> Schedule:
+def calculateSchedule(globalDays: [Day], tasks: [Task], currentSchedule: Schedule, start: arrow.Arrow, debug=False) -> Schedule:
     days = currentSchedule.days()
+    oldDays = [day.copy() for day in days if day.date < start.date()] # TODO How to deal with start day (may be half-half)?
+    startIndex = None
+    for i, day in enumerate(globalDays):
+        if day.date == start.date():
+            startIndex = i
+            break
+    else:
+        raise Exception("Error in schedule_alg 555255GGG")
+    
+    newDays = [day.copy() for day in globalDays[startIndex:]]
+
+    lastWorkConfirmed = currentSchedule.lastWorkConfirmed
 
     if start < util.smoothCurrentArrow():
         raise Exception("Cannot calculate a schedule for the past")
@@ -24,19 +36,26 @@ def calculateSchedule(tasks: [Task], currentSchedule: Schedule, start: arrow.Arr
         lastWorkConfirmed = start.clone()
     
     # Creates a clean copy of the tasks and days, so that no evil mutation occurs
-    tmpDays = sorted([day.copy() for day in days], key=lambda d: d.date)
+    newDays = sorted(newDays, key=lambda d: d.date)
     tmpTasks = sorted([task.copy() for task in tasks], key=lambda t: t.deadline)
 
     if isSolvable(tasks, days, start, useMinimum=False):
-        return calculateHappySchedule(tmpTasks, tmpDays, lastWorkConfirmed, start, debug=debug)
+        happySchedule = calculateHappySchedule(tmpTasks, newDays, lastWorkConfirmed, start, debug=debug) # Adds the history (previous schedule) to the newly calculated schedule
+        happySchedule.addHistory(oldDays)
+        return happySchedule
     elif isSolvable(tasks, days, start, useMinimum=True):
-        return calculateSadSchedule(tmpTasks, tmpDays, lastWorkConfirmed, start, debug=debug)
-        #return calculateRiskySchedule(tmpTasks, tmpDays, created=start)
+        riskySchedule = calculateSadSchedule(tmpTasks, newDays, lastWorkConfirmed, start, debug=debug)
+        riskySchedule.addHistory(oldDays)
+        return riskySchedule
+        #return calculateRiskySchedule(tmpTasks, newDays, created=start)
     else:
-        return calculateSadSchedule(tmpTasks, tmpDays, lastWorkConfirmed, start, debug=debug)
+        sadSchedule = calculateSadSchedule(tmpTasks, newDays, lastWorkConfirmed, start, debug=debug)
+        sadSchedule.addHistory(oldDays)
+        return sadSchedule
 
 def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
-    # "start" marks the separation between the past-schedule and new schedule
+    # Only calculates the new schedule with NO REGARD TO THE PAST SCHEDULE
+
     for tmpTask in tmpTasks:
         if tmpTask.maxRemainingTime <= 0:
             print(f"WARNING: Already completed tmpTask! MaxRemainingTime: {tmpTask.maxRemainingTime}")
@@ -167,7 +186,15 @@ def calculateRiskySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: 
     raise Exception("Risky schedule is not implemented and a low priority feature")
 
 def calculateSadSchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
-    raise Exception("Sad schedule is not implemented yet")
+    print("WARNING: Happy schedule is not possibe; Using sad schedule algorithm. This algorithm is HIGHLY EXPERIMENTAL and may drop tasks arbitrarily.")
+    # Temporary solution: Just delete low priority tasks till it fits
+    prioritisedTasks = sorted(tmpTasks, key=getTaskHappySignificance, reverse=True)
+    while not isSolvable(prioritisedTasks, days, start, debug=debug):
+        removedTask = prioritisedTask.pop()
+        print(f"WARNING: Removing Task {removedTask.name} to convert to happy schedule.")
+    return calculateHappySchedule(prioritisedTasks, tmpDays, lastWorkConfirmed, start)
+    
+
 
 def unfinishedDeadlineTasks(tasks: [Task]) -> [Task]:
     return list(filter(lambda task: task.hasDeadline() and task.maxRemainingTime > 0, tasks))

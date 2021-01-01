@@ -28,15 +28,19 @@ def autoupdate():
     config = storage.initConfig() # Objects are stored in their exported form (dict) in the config
     days = storage.initDays(config) # This might be a PERFORMANCE KILLER
     tasks = storage.loadTasks()
-    schedule = storage.loadSchedule(tasks, days) # This might be a PERFORMANCE KILLER
+    schedule = storage.loadSchedule(tasks, days)
+    confirmRecentWork()
+    schedule = calculateSchedule(days, tasks, schedule, util.smoothCurrentArrow()) # This might be a PERFORMANCE KILLER
 
 def onInit():
     print("Initialising...")
     # Initialisation hooks
+    confirmRecentWork()
 
+def confirmRecentWork():
     # Check if any planned tasks/timeslots of the schedule have occurred between the last time work was confirmed
-    print("Loading schedule...")
     recentlyCompleted = schedule.recentlyCompleted()
+    print(f"Recently completed: {recentlyCompleted}")
     if recentlyCompleted:
         print("Please confirm the following schedule events that should have occurred since your last visit (y/n):")
 
@@ -121,21 +125,21 @@ def mainMenu():
         autosave()
         autoupdate() # Reloads EVERYTHING. This is good as it auto-applies config updates, but also might be a PERFORMANCE KILLER
         try:
-            print("1) Show Active Tasks")
+            print("1) TBD")
             print("2) Open Calendar")
-            print("3) Add Task")
-            print("4) Change daily TimeSlots")
+            print("3) Open Tasks")
+            print("4) Edit daily TimeSlots")
             print("5) Edit a specific Day")
             print("8) Show All Days (debug)")
             print("9) Exit")
             choice = intput("", "Not a valid number!")
             
             if choice == 1:
-                showActiveTasks()
+                pass
             elif choice == 2:
-                viewCalendarMenu() 
+                viewCalendarMenu()
             elif choice == 3:
-                addTaskMenu() 
+                viewTaskMenu()
             elif choice == 4:
                 changeTimeSlotsMenu()
             elif choice == 5:
@@ -148,7 +152,31 @@ def mainMenu():
                 print("Invalid number!")
         except KeyboardInterrupt:
             print("Aborted by user.")
-            
+
+def viewTaskMenu():
+    
+    while True:
+        autosave()
+        print("1) View Tasks")
+        print("2) Add Task")
+        print("3) Add time to task")
+        print("4) Remove Task")
+        print("9) Back to Main Menu")
+        choice = intput("", "Not a valid number!")
+        
+        if choice == 1:
+            showActiveTasks()
+        elif choice == 2:
+            addTaskMenu()
+        elif choice == 3:
+            addTaskCompletionTime()
+        elif choice == 3:
+            removeTask()
+        elif choice == 9:
+            return
+        else:
+            print("Invalid number!")
+
 def addTaskMenu():
     while True:
         autosave()
@@ -168,6 +196,13 @@ def addTaskMenu():
             return
         else:
             print("Invalid number!")
+
+def addTaskCompletionTime():
+    showActiveTasks() # TODO This needs to show some sort of numbering that the user can then use to target that task
+    print("TODO")
+
+def removeTask():
+    print("TODO")
 
 def addIntervalTaskToConfig():
     try:

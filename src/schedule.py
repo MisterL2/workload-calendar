@@ -11,7 +11,7 @@ import util
 class Schedule():
     @staticmethod
     def fromDict(valueDict: {}, globalTasks: [Task]):
-        created, lastWorkConfirmed, scheduleDays = util.dateStringToArrow(valueDict["created"]), util.dateStringToArrow(valueDict["lastWorkConfirmed"]), valueDict["scheduleDays"]
+        created, lastWorkConfirmed, scheduleDays = util.dateTimeStringToArrow(valueDict["created"]), util.dateTimeStringToArrow(valueDict["lastWorkConfirmed"]), valueDict["scheduleDays"]
         days = [Day.fromDict(scheduleDayDict, globalTasks=globalTasks) for scheduleDayDict in scheduleDays]
         return Schedule(days, lastWorkConfirmed, created=created)
 
@@ -23,10 +23,16 @@ class Schedule():
         else:
             self.created = created
         
-        self.__days = [day.copy() for day in days] # Deepcopy
+        self.__days = []
+
+        for day in days: # Deepcopy
+            self.addDay(day.copy())
 
     def days(self):
         return self.__days
+
+    def addHistory(self, days: [Day]): # Adds the history (previous schedule) to the schedule
+        self.__days = [day.copy() for day in days] + self.__days
 
     def addDay(self, day: Day):
         for existingDay in self.__days:
@@ -151,6 +157,18 @@ class Schedule():
             "lastWorkConfirmed" : util.formatDate(self.lastWorkConfirmed) # This is a pointer to the last time that the user confirmed a work block. Users should be prompted to confirm past work blocks when initialising the schedule
         }
 
-    def recentlyCompleted(self) -> {}:
-        #raise Exception("TBD in schedule")
-        return {}
+    def recentlyCompleted(self) -> []:
+        recentlyCompleted = []
+        currentArrow = arrow.now()
+        affectedDays = list(filter(lambda day : day.date >= self.lastWorkConfirmed.date() and day.date <= currentArrow.date(), self.__days))
+        for affectedDay in affectedDays:
+            timeSlots = [ts for ts in affectedDay.timeSlots if ts.taskOrAppointment is not None]
+            if affectedDay.date == self.lastWorkConfirmed.date(): # First day of area
+                timeSlots = list(filter(lambda ts: ts.endTime > Time(self.lastWorkConfirmed.hour, self.lastWorkConfirmed.minute), timeSlots))
+                # Remove all timeslots prior
+            if affectedDay.date == currentArrow.date(): # NOT an elif, as a day can be both start and end day
+                timeSlots = list(filter(lambda ts: ts.endTime < Time(self.lastWorkConfirmed.hour, self.lastWorkConfirmed.minute), timeSlots))
+                # Remove all timeslot after
+            for timeSlot in timeSlots:
+                recentlyCompleted.append({"dateString" : util.dateString(affectedDay.date), "timeSlot" : timeSlot, "task" : timeSlot.taskOrAppointment})
+        return recentlyCompleted

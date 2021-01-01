@@ -129,5 +129,20 @@ def load(name: str):
 
 def loadSchedule(globalTasks: [Task], days: [Day], debug=False) -> Schedule:
     scheduleDict = load("schedule")
-    return Schedule.fromDict(scheduleDict, globalTasks)
+    if not scheduleDict or not scheduleDict["scheduleDays"]:
+        return calculateSchedule(days, globalTasks, Schedule(days, util.smoothCurrentArrow(), created=util.smoothCurrentArrow()), util.smoothCurrentArrow())
+    schedule = Schedule.fromDict(scheduleDict, globalTasks)
+    lastScheduleDate = schedule.days()[-1].date
+    if days[-1].date > lastScheduleDate: # New days need to be added
+        lastDayIndex = None
+        for i, day in enumerate(days):
+            if day.date == lastScheduleDate:
+                lastDayIndex = i
+                break
+        else:
+            raise Exception("Error in Storage 1155523236")
+        for missingDay in days[lastDayIndex:]:
+            schedule.addDay(missingDay)
+    return schedule
 
+#"scheduleDays": [], "created": "01.01.2021 10:30", "lastWorkConfirmed": "01.01.2021 10:24"

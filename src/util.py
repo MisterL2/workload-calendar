@@ -5,7 +5,7 @@ import arrow
 
 def dateString(datetime, time=False):
     if time:
-        return f"{datetime.day:02}.{datetime.month:02}.{datetime.year} @ {datetime.hour:02}:{datetime.minute:02}"
+        return f"{datetime.day:02}.{datetime.month:02}.{datetime.year} {datetime.hour:02}:{datetime.minute:02}"
     else:
         return f"{datetime.day:02}.{datetime.month:02}.{datetime.year}"
 
@@ -20,7 +20,7 @@ def timeParseAsTuple(timeString: str) -> (int, int):
     return hours, minutes
 
 def dateTimeStringToArrow(dateString: str) -> arrow.Arrow:
-    return arrow.get(dateString, "DD.MM.YYYY @ HH:mm")
+    return arrow.get(dateString, "DD.MM.YYYY HH:mm")
 
 def dateStringToArrow(dateString: str) -> arrow.Arrow:
     return arrow.get(dateString, "DD.MM.YYYY")
@@ -31,12 +31,13 @@ def smoothCurrentArrow() -> arrow.Arrow:
     currentArrow.microsecond = 0
 
     if currentArrow.minute >= 30:
-        currentArrow.hour += 1
-        currentArrow.minute = 0
+        hour = currentArrow.hour + 1
+        minute = 0
     else:
-        currentArrow.minute = 30
+        hour = currentArrow.hour
+        minute = 30
 
-    return currentArrow
+    return arrow.Arrow(currentArrow.year, currentArrow.month, currentArrow.day, hour=hour, minute=minute, second=0, microsecond=0)
 
 # DO NOT CHANGE THESE. Many Tests depend on them!
 def exampleTimeSlots() -> [TimeSlot]:

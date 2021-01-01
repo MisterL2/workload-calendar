@@ -1,4 +1,5 @@
 TO-DO
+-> WHEN USING ADDHISTORY, HANDLE CASES AFFECTING THE CURRENT DAY (i.e. completed timeslots for today need to be added in history, future timeslots need to be part of newdays)
 -> Ability to remove tasks
 -> Ability to remove interval tasks
 -> Interval tasks need to auto-set deadline

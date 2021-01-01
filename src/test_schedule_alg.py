@@ -411,7 +411,7 @@ class ScheduleTest(TestCase):
 
                 debug = paramDict["name"] == "cEHS-0.8"
 
-                schedule = schedule_alg.calculateSchedule(tasks, schedule, arrow.Arrow.fromdate(schedule.days()[0].date), debug=debug)
+                schedule = schedule_alg.calculateSchedule(schedule.days(), tasks, schedule, arrow.Arrow.fromdate(schedule.days()[0].date), debug=debug)
 
                 if debug: print(tasks)
                 if debug: print(schedule)

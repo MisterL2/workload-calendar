@@ -52,6 +52,9 @@ class Day(Comparable):
             schedule.append(appts)
         return sorted(schedule, key=lambda ts: ts.startTime)
 
+    @property
+    def dayScheduleWorkTime(self) -> int:
+        return int(sum([ts.durationInMinutes for ts in self.daySchedule]))
 
     def freeTimeSlots(self, before=None, after=None) -> [TimeSlot]: # Returns a NEW DEEPCOPIED LIST containing new objects / copies
         # At this point, priority could be used to determine if appointments should get thrown out
@@ -181,7 +184,8 @@ class Day(Comparable):
         if dayScheduleString == "": 
             dayScheduleString = "<<< Nothing scheduled on this day! Enjoy your freedom ;) >>>"
         weekday = self.date.strftime("%A").capitalize()
-        return f"*{weekday} {self.dateString} ({self.timeInMinutes()/60:.1f} h)*\n\t{dayScheduleString}"
+        
+        return f"*{weekday} {self.dateString} ({self.dayScheduleWorkTime/60:.1f} h)*\n\t{dayScheduleString}"
 
     def __repr__(self) -> str:
         timeSlotString = "; ".join([repr(t) for t in self.timeSlots])
