@@ -17,7 +17,7 @@ def saveConfig(config: {}):
         if key == "recurringTasks":
             exportedRecurringTasks = []
             for recurringTaskDict in config[key]:
-                exportedRecurringTaskDict = {"task" : recurringTaskDict["task"].export(), "interval" : recurringTaskDict["interval"], "startDate": util.dateString(recurringTaskDict["startDate"])}
+                exportedRecurringTaskDict = {"task" : recurringTaskDict["task"].export(), "interval" : recurringTaskDict["interval"]}
                 exportedRecurringTasks.append(exportedRecurringTaskDict)
             exportedConfig[key] = exportedRecurringTasks
             continue
@@ -83,7 +83,7 @@ def initDays(config: {}) -> [Day]:
     return days
 
 
-def initDay(day: Day, config: {}):
+def initDay(day: Day, config: {}) -> None:
     if day.special:  # No defaults are applied
         return
         
@@ -100,7 +100,8 @@ def initDay(day: Day, config: {}):
             if timeSlot in day.timeSlots:
                 pass # Already added
             else:
-                print(f"WARNING: Default TimeSlot {timeSlot} could not be added to {day}")
+                # In case of overlap, avoid a crash by not applying the default timeSlot
+                print(f"WARNING: Default TimeSlot {timeSlot} could not be added to {day} because it overlaps with an existing TimeSlot!")
 
 
 def initConfig() -> {}:
@@ -120,15 +121,35 @@ def initConfig() -> {}:
     # Import serialized objects
     newRecurringTasks = []
     for recurringTaskDict in config["recurringTasks"]:
-        newRecurringTaskDict = {"task" : Task.fromDict(recurringTaskDict["task"]), "interval" : recurringTaskDict["interval"], "startDate" : util.dateStringToArrow(recurringTaskDict["startDate"])}
+        newRecurringTaskDict = {"task" : Task.fromDict(recurringTaskDict["task"]), "interval" : recurringTaskDict["interval"]}
         newRecurringTasks.append(newRecurringTaskDict)
     config["recurringTasks"] = newRecurringTasks
 
     return config
 
-def loadTasks() -> [Task]:
+def loadTasks(config: {}, globalDays: [Day]) -> [Task]:
     taskList = load("tasks")
     tasks = [Task.fromDict(d) for d in taskList]
+    # Auto-extend recurringTasks
+    for recurringTaskDict in config["recurringTasks"]:
+        recurringTask = recurringTaskDict["task"]
+        # Find last deadline for this task in tasks
+        generatedTasks = sorted([task for task in tasks if task.recurringTaskUUID == recurringTask.uuid], key=lambda task: task.deadline)
+        if generatedTasks:
+            lastGeneratedTask = generatedTasks[-1]
+            # Shift deadline by {interval}
+            newDeadline = lastGeneratedTask.deadline.shift(days=recurringTaskDict["interval"])
+        else:
+            # Shift the start date by {interval} to get the first deadline
+            newDeadline = recurringTask.start.shift(days=recurringTaskDict["interval"])
+        
+        # See if that deadline is still in days
+        while newDeadline.date() < globalDays[-1].date:
+            newTask = Task.fromRecurring(recurringTask, newDeadline)
+            # print(newTask)
+            tasks.append(newTask)
+            newDeadline = newDeadline.shift(days=recurringTaskDict["interval"])
+        
     return tasks
 
 def load(name: str):

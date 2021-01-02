@@ -54,19 +54,20 @@ class Schedule():
             raise DateNotFoundException("This week is after the end of the schedule!")
 
         startDate = arrow.get(anyDateOfThatWeek).shift(days=-anyDateOfThatWeek.weekday()).date() # Move backwards to the next monday (no shift is done if anyDateOfThatWeek is a monday)
-
+        
         if startDate < self.__days[0].date: # If the lower limit is reached, start the week with the first day. In this case, the week doesn't go from monday-sunday but from the first day to sunday
             startDate = self.__days[0].date
 
+        
         currentWeekday = startDate.weekday() # In most cases this is 7, but if the startDate is mid-week this will have a value
         startIndex = 0
         for i, day in enumerate(self.__days):
             if day.date == startDate:
                 startIndex = i
                 break
-
+        
         weekDays = [day.copy() for day in self.__days[startIndex : startIndex + (7 - currentWeekday)]] # All days from startDate to the next sunday
-
+        
         return Week(weekDays)
 
 

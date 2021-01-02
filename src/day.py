@@ -107,17 +107,20 @@ class Day(Comparable):
                 return True
         return False
 
-    def addTimeSlot(self, timeslot: TimeSlot):
+    def addTimeSlot(self, timeSlot: TimeSlot):
         for existingTimeSlot in self.timeSlots:
-            if existingTimeSlot.overlaps(timeslot):
+            if existingTimeSlot.overlaps(timeSlot):
                 raise ValueError("TimeSlots may not overlap!")
 
-        if self.special and timeslot.temporary:
-            print("WARNING: Trying to add temporary timeslot to special day")
+        if self.special and timeSlot.temporary:
+            print("WARNING: Trying to add temporary timeSlot to special day")
         else:
-            self.timeSlots.append(timeslot)
+            self.timeSlots.append(timeSlot)
 
         self.timeSlots = sorted(self.timeSlots, key=lambda ts: ts.startTime)
+
+    def removeTimeSlot(self, timeSlot: TimeSlot):
+        self.timeSlots.remove(timeSlot)
 
     # This should only ever be performed on a copy of the days by the schedule / schedule_alg and NEVER the persisted version
     def scheduleTask(self, newTimeSlot: TimeSlot, task: Task, debug=False):
@@ -164,6 +167,7 @@ class Day(Comparable):
 
     def unmarkSpecial(self):
         self.special = False
+        self.timeSlots = []
         # Re-add all temporary timeslots (This is done in the "ui.py" LUL)
 
     def export(self, forSchedule=False) -> dict:
@@ -179,13 +183,17 @@ class Day(Comparable):
         newDay.timeSlots = [ts.fullCopy() for ts in self.timeSlots] # To avoid temporary tasks from being forgotten during the export
         return newDay
 
+    @property
+    def headline(self) -> str:
+        weekday = self.date.strftime("%A").capitalize()
+        return f"*{weekday} {self.dateString} ({self.dayScheduleWorkTime/60:.1f} h)*"
+
     def detailedView(self) -> str:
         dayScheduleString = "\n\t".join([repr(t) for t in self.daySchedule])
         if dayScheduleString == "": 
             dayScheduleString = "<<< Nothing scheduled on this day! Enjoy your freedom ;) >>>"
-        weekday = self.date.strftime("%A").capitalize()
         
-        return f"*{weekday} {self.dateString} ({self.dayScheduleWorkTime/60:.1f} h)*\n\t{dayScheduleString}"
+        return f"{self.headline}\n\t{dayScheduleString}"
 
     def __repr__(self) -> str:
         timeSlotString = "; ".join([repr(t) for t in self.timeSlots])

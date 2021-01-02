@@ -13,7 +13,7 @@ from scheduleexceptions import DateNotFoundException
 
 config = storage.initConfig() # Objects are stored in their exported form (dict) in the config
 days = storage.initDays(config)
-tasks = storage.loadTasks()
+tasks = storage.loadTasks(config, days)
 schedule = storage.loadSchedule(tasks, days)
 
 def autosave():
@@ -27,7 +27,7 @@ def autoupdate():
     global config, days, tasks, schedule
     config = storage.initConfig() # Objects are stored in their exported form (dict) in the config
     days = storage.initDays(config) # This might be a PERFORMANCE KILLER
-    tasks = storage.loadTasks()
+    tasks = storage.loadTasks(config, days)
     schedule = storage.loadSchedule(tasks, days)
     confirmRecentWork()
     schedule = calculateSchedule(days, tasks, schedule, util.smoothCurrentArrow()) # This might be a PERFORMANCE KILLER
@@ -45,8 +45,10 @@ def confirmRecentWork():
         print("Please confirm the following schedule events that should have occurred since your last visit (y/n):")
 
     # TODO IMPORTANT TODO Consider the potential timeslot that we are currently in, which is not finished yet but rather WIP, particularly for new schedule creation.
-    # It would be bad to remove the current timeslot in the creation of a new schedule... imagine the user is 3h into a 4h timeslot and then another task is scheduled there semi-retroactively
-    
+    # TODO ^^^ Need to consider the amount of hours currently scheduled for the task when building a new schedule.
+    # i.e. if we are in the middle of a 4h-block of some Task A, we need consider that these 4h are already scheduled for that task (but not counted towards task progress yet)
+    # This needs to be considered, otherwise Task A is overscheduled, as the 4h block is scheduled again
+
     taskStates = {}
 
     # Algorithm:
@@ -125,25 +127,25 @@ def mainMenu():
         autosave()
         autoupdate() # Reloads EVERYTHING. This is good as it auto-applies config updates, but also might be a PERFORMANCE KILLER
         try:
-            print("1) TBD")
-            print("2) Open Calendar")
-            print("3) Open Tasks")
-            print("4) Edit daily TimeSlots")
-            print("5) Edit a specific Day")
+            print("1) Calendar")
+            print("2) Tasks")
+            print("3) Daily TimeSlots")
+            print("4) Edit a specific Day")
+            print("7) Show entire Schedule (debug)")
             print("8) Show All Days (debug)")
             print("9) Exit")
             choice = intput("", "Not a valid number!")
             
             if choice == 1:
-                pass
-            elif choice == 2:
                 viewCalendarMenu()
-            elif choice == 3:
+            elif choice == 2:
                 viewTaskMenu()
-            elif choice == 4:
+            elif choice == 3:
                 changeTimeSlotsMenu()
-            elif choice == 5:
+            elif choice == 4:
                 daySelectionMenu()
+            elif choice == 7:
+                showSchedule() # Debug
             elif choice == 8:
                 showDays() # Debug
             elif choice == 9:
@@ -152,6 +154,9 @@ def mainMenu():
                 print("Invalid number!")
         except KeyboardInterrupt:
             print("Aborted by user.")
+
+def showSchedule():
+    print(schedule)
 
 def viewTaskMenu():
     
@@ -191,7 +196,7 @@ def addTaskMenu():
         elif choice == 2:
             addTask(hasDeadline=False)
         elif choice == 3:
-            addIntervalTaskToConfig()
+            addRecurringTaskToConfig()
         elif choice == 9:
             return
         else:
@@ -204,10 +209,13 @@ def addTaskCompletionTime():
 def removeTask():
     print("TODO")
 
-def addIntervalTaskToConfig():
+def addRecurringTaskToConfig():
     try:
         task = taskInput(hasDeadline=False)
+        task.updateValue("recurringTaskUUID", task.uuid)
         startDay = dayDateInput("What is the START date of this repeating task? ")
+        start = arrow.Arrow(startDay.year, startDay.month, startDay.day, hour=0, minute=0, microsecond=0)
+        task.updateValue("start", start)
         while True:
             intervalDays = intput("What is the interval (days) that this task repeats in (weekly=7)? ", error="Please enter a valid number")
             if intervalDays < 1:
@@ -215,7 +223,7 @@ def addIntervalTaskToConfig():
             else:
                 break
         
-        config["recurringTasks"].append({"task" : task, "interval" : intervalDays, "startDate": startDay})
+        config["recurringTasks"].append({"task" : task, "interval" : intervalDays})
         print("Repeating Task added successfully!")
     except KeyboardInterrupt:
         print("Aborted by user. Returning to main menu")
@@ -249,20 +257,24 @@ def taskInput(hasDeadline=True) -> Task:
 
 def showActiveTasks(): 
     print("=================================")
-    if tasks or config["recurringTasks"]:
-        if tasks:
+    regularTasks = [task for task in tasks if task.recurringTaskUUID is None] # Filter out generated (recurring) tasks
+    if regularTasks or config["recurringTasks"]:
+        if regularTasks:
             print("Regular Tasks:")
-            for task in tasks:
+            for task in regularTasks:
                 print(showTaskSummary(task))
         else:
             print("~~~No regular Tasks~~~")
         
         if config["recurringTasks"]:
             print("Recurring Tasks:")
+            futureGeneratedTasks = [task for task in tasks if task.recurringTaskUUID is not None and task.start]
             for recurringTaskDict in config["recurringTasks"]:
-                print(f"{showTaskSummary(recurringTaskDict['task'],recurring=True)} (Interval: {recurringTaskDict['interval']} days) from {util.dateString(recurringTaskDict['startDate'])}")
+                #print(f"{showTaskSummary(recurringTaskDict['task'],recurring=True)} (Interval: {recurringTaskDict['interval']} days) from {util.dateString(recurringTaskDict['startDate'])}")
+                recurringTaskUUID = recurringTaskDict["task"].recurringTaskUUID
+
         else:
-            print("~~~No recurring Tasks~~~")        
+            print("~~~No recurring Tasks~~~")
     else:
         print("You have no active tasks!")
     print("=================================")
@@ -278,11 +290,11 @@ def showDays(): # Debug
     for day in days:
         print(day)
 
-def timeSlotInput(info1: str, info2: str) -> TimeSlot:
+def timeSlotInput(startTimeInfo: str, endTimeInfo: str) -> TimeSlot:
     while True:
         try:
-            startTime = timeInput(info1)
-            endTime = timeInput(info2)
+            startTime = timeInput(startTimeInfo)
+            endTime = timeInput(endTimeInfo)
             return TimeSlot(startTime, endTime)
         except ValueError as e:
             print(e)
@@ -336,7 +348,7 @@ def removeAppointment(day: Day):
     else:
         print(f"Error: No Appointment with name '{name}' on this day!")
 
-def addTimeSlot(weekday: bool):
+def addRegularTimeSlot(weekday: bool):
     while True:
         try:
             timeSlot = timeSlotInput("Please enter the start time of the TimeSlot (HH:MM): ", "Please enter the end time of the TimeSlot (HH:MM): ")
@@ -354,7 +366,7 @@ def addTimeSlot(weekday: bool):
         except ValueError as e:
             print(e)
 
-def removeTimeSlot(weekday: bool):
+def removeRegularTimeSlot(weekday: bool):
     if weekday:
         timeSlots = config["weekdayTimeSlots"]
         print("The following TimeSlots are scheduled for weekdays: ")
@@ -392,13 +404,13 @@ def changeTimeSlotsMenu():
         choice = intput("", "Not a valid number!")
         
         if choice == 1:
-            addTimeSlot(weekday=True)
+            addRegularTimeSlot(weekday=True)
         elif choice == 2:
-            addTimeSlot(weekday=False)
+            addRegularTimeSlot(weekday=False)
         elif choice == 3 and len(config["weekdayTimeSlots"]) > 0:
-            removeTimeSlot(weekday=True)
+            removeRegularTimeSlot(weekday=True)
         elif choice == 4 and len(config["weekendTimeSlots"]) > 0:
-            removeTimeSlot(weekday=False)
+            removeRegularTimeSlot(weekday=False)
         elif choice == 9:
             return
         else:
@@ -425,6 +437,8 @@ def editDayMenu(day: Day):
         print("2) Mark as normal (Default Timestamps apply)")
         print("3) Add Appointment")
         print("4) Remove Appointment")
+        print("5) Add Custom TimeSlot")
+        print("6) Remove Custom TimeSlot")
         print("9) Back to Main Menu")
         choice = intput("", "Not a valid number!")
         
@@ -436,10 +450,40 @@ def editDayMenu(day: Day):
             addAppointment(day)
         elif choice == 4:
             removeAppointment(day)
+        elif choice == 5:
+            addTimeSlot(day)
+        elif choice == 6:
+            removeCustomTimeSlot(day)
         elif choice == 9:
             return
         else:
             print("Invalid number!")
+
+def addTimeSlot(day: Day):
+    while True:
+        ts = timeSlotInput("Please enter the START time (HH:MM) of the TimeSlot: ", "Please enter the END time (HH:MM) of the TimeSlot: ")
+        try:
+            return day.addTimeSlot(ts)
+        except ValueError as e:
+            print(e)
+
+
+def removeCustomTimeSlot(day: Day):
+    print(day.headline)
+    customTimeSlots = [ts for ts in day.timeSlots if not ts.temporary] # Filters out any default TimeSlots, which cannot be removed here (but instead in `Daily TimeSlots`)
+    if customTimeSlots:
+        for i, ts in enumerate(customTimeSlots):
+            print(f"{i}: {ts}")
+        while True:
+            choice = intput("Please select the TimeSlot that you wish to remove: ", f"Please select a number between 0 and {len(customTimeSlots)-1}")
+            if choice >= 0 and choice < len(customTimeSlots):
+                selected = customTimeSlots[choice]
+                day.removeTimeSlot(selected)
+                print(f"TimeSlot `{selected}` removed!")
+                return
+            print(f"Please select a number between 0 and {len(customTimeSlots)-1}")
+    else:
+        print("There are no custom TimeSlots for this day!")
 
 def validatedInput(info: str, error: str, validator):
     while True:

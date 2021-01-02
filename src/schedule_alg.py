@@ -21,6 +21,7 @@ def calculateSchedule(globalDays: [Day], tasks: [Task], currentSchedule: Schedul
 
     days = currentSchedule.days()
     oldDays = [day.copy() for day in days if day.date <= start.date()] # Contains all days PRIOR to start date (last is popped off)
+    
     oldTimeSlots = []
     if oldDays: # On initial creation, there are no old days
         lastDay = oldDays.pop() # This day is changed after the current timeslot and kept the same before.
@@ -48,6 +49,7 @@ def calculateSchedule(globalDays: [Day], tasks: [Task], currentSchedule: Schedul
     else:
         raise Exception("Error in schedule_alg 555255GGG")
     
+    
     newDays = [day.copy() for day in globalDays[startIndex:]]
 
     # Remove TimeSlots prior to start
@@ -72,12 +74,12 @@ def calculateSchedule(globalDays: [Day], tasks: [Task], currentSchedule: Schedul
     # Creates a clean copy of the tasks and days, so that no evil mutation occurs
     newDays = sorted(newDays, key=lambda d: d.date)
     tmpTasks = sorted([task.copy() for task in tasks], key=lambda t: t.deadline)
-
-    if isSolvable(tasks, days, start, useMinimum=False):
+    
+    if isSolvable(tasks, newDays, start, useMinimum=False):
         happySchedule = calculateHappySchedule(tmpTasks, newDays, lastWorkConfirmed, start, debug=debug) # Adds the history (previous schedule) to the newly calculated schedule
         happySchedule.addHistory(oldDays)
         return happySchedule
-    elif isSolvable(tasks, days, start, useMinimum=True):
+    elif isSolvable(tasks, newDays, start, useMinimum=True):
         riskySchedule = calculateSadSchedule(tmpTasks, newDays, lastWorkConfirmed, start, debug=debug)
         riskySchedule.addHistory(oldDays)
         return riskySchedule
@@ -220,11 +222,11 @@ def calculateRiskySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: 
     raise Exception("Risky schedule is not implemented and a low priority feature")
 
 def calculateSadSchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
-    print("WARNING: Happy schedule is not possibe; Using sad schedule algorithm. This algorithm is HIGHLY EXPERIMENTAL and may drop tasks arbitrarily.")
+    print("WARNING: Happy schedule is not possible; Using sad schedule algorithm. This algorithm is HIGHLY EXPERIMENTAL and may drop tasks arbitrarily.")
     # Temporary solution: Just delete low priority tasks till it fits
     prioritisedTasks = sorted(tmpTasks, key=getTaskHappySignificance, reverse=True)
-    while not isSolvable(prioritisedTasks, days, start, debug=debug):
-        removedTask = prioritisedTask.pop()
+    while not isSolvable(prioritisedTasks, tmpDays, start, debug=debug):
+        removedTask = prioritisedTasks.pop()
         print(f"WARNING: Removing Task {removedTask.name} to convert to happy schedule.")
     return calculateHappySchedule(prioritisedTasks, tmpDays, lastWorkConfirmed, start)
     

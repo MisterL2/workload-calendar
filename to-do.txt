@@ -1,13 +1,11 @@
 TO-DO
--> WHEN USING ADDHISTORY, HANDLE CASES AFFECTING THE CURRENT DAY (i.e. completed timeslots for today need to be added in history, future timeslots need to be part of newdays)
+-> Make schedule calculation consider START DATES of recurring tasks (do not allow scheduling before start dates; update timegraph
+-> Properly display recurring tasks
 -> Ability to remove tasks
 -> Ability to remove interval tasks
--> Interval tasks need to auto-set deadline
 -> Ability to complete tasks manually (needs to trigger a lastWorkConfirmed procedure immediately to avoid async)
 -> Test UI confirmation sequence
 -> Go through schedule-weeks in UI (with commands like "next", "previous") and check constraints on weeks that are too far in the past
 
-ISSUES
--> When updating a schedule, is willing to update into the past as well. Need to properly persist schedule... Reloading from deterministic algorithm does not make sense: any new task added changes the parameters and hence the outcome, so a high prio task might be scheduled waaay into the past. Limiting this with start/end times also doesn't work, because the old schedule might not be possible in those constraints or change according to deadline proximity...
 
 -> Add Task-Appointments (fixed time appointment that belongs to a task and is counted towards its hours. Be careful with this! This needs to be added to i.e. onInit-recentlyCompleted in UI as well.

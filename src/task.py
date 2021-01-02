@@ -5,13 +5,25 @@ import util
 
 class Task:
     @staticmethod
+    def fromRecurring(recurringTask, deadline: Arrow):
+        # Use recurring Task as base
+        task = Task.fromDict(recurringTask.export())
+        # Generate fresh UUID
+        task.updateValue("uuid", util.generateUUID())
+        # Apply deadline
+        task.updateValue("deadline", deadline)
+        return task
+
+    @staticmethod
     def fromDict(valueDict: dict):
         deadlineArrow = util.dateTimeStringToArrow(valueDict["deadline"])
-        return Task(valueDict["uuid"], valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"], completedTime=valueDict["completedTime"])
+        return Task(valueDict["uuid"], valueDict["name"], valueDict["minTime"], valueDict["maxTime"], valueDict["priority"], deadlineArrow, valueDict["minBlock"], completedTime=valueDict["completedTime"], recurringTaskUUID=valueDict["recurringTaskUUID"], start=valueDict["start"])
 
-    def __init__(self, uuidString: str, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int, completedTime: int=0):
+    def __init__(self, uuidString: str, name: str, minTimeMinutes: int, maxTimeMinutes: int, priority: int, deadline: Arrow, minBlock: int, completedTime: int=0, recurringTaskUUID=None, start=None):
         self.__deadlineArrow = deadline if deadline is not None else util.getInfinityDate()
+        self.__start = util.dateStringToArrow(start) if start is not None else util.smoothCurrentArrow()
         self.__data = {
+            "recurringTaskUUID" : recurringTaskUUID, # If this task was generated from a recurring task, keep that ID as reference so they can all be added / removed as appropriate
             "uuid": uuidString,
             "name" : name,
             "completedTime" : completedTime,
@@ -19,12 +31,21 @@ class Task:
             "maxTime" : int(maxTimeMinutes), # In Minutes
             "priority" : priority,
             "deadline" : util.dateString(self.__deadlineArrow, time=True),
+            "start" : util.dateString(self.__start, time=True),
             "minBlock" : minBlock  # If this is 120, it means that this task should not be split up into chunks smaller than 120mins.
         }
 
     def updateValue(self, key, value):
-        if key == "deadline" and value is None:
-            value = util.getInfinityDate()
+        if key == "deadline": # As arrow
+            if value is None:
+                value = util.getInfinityDate()
+            self.__deadlineArrow = value # Also change the internal field to remain consistent
+            value = util.dateString(value, time=True)
+        
+        if key == "start": # As arrow
+            self.__start = value # Also change the internal field to remain consistent
+            value = util.dateString(value, time=True)
+
         self.__data[key] = value
 
     def addTimeRequirement(self, minutesToAdd: int): # Make the task longer
@@ -38,6 +59,14 @@ class Task:
         # 0 = not finished
         # 1 = minimum time reached
         # 2 = maximum time reached
+
+    @property
+    def recurringTaskUUID(self) -> str:
+        return self.__data["recurringTaskUUID"]
+
+    @property
+    def start(self) -> Arrow:
+        return self.__start
 
     @property
     def uuid(self) -> str:
