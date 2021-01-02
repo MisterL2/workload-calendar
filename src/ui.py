@@ -10,6 +10,7 @@ import storage
 import util
 from schedule_alg import calculateSchedule
 from scheduleexceptions import DateNotFoundException
+import ui_util
 
 config = storage.initConfig() # Objects are stored in their exported form (dict) in the config
 days = storage.initDays(config)
@@ -44,6 +45,10 @@ def onInit():
     # Initialisation hooks
     confirmRecentWork()
 
+def isTaskFinished(task: Task, status: int):
+    print(f"TODO: The user would be ask to confirm if this task is finished; it has status {status}")
+
+
 def confirmRecentWork():
     # Check if any planned tasks/timeslots of the schedule have occurred between the last time work was confirmed
     recentlyCompleted = schedule.recentlyCompleted()
@@ -68,18 +73,18 @@ def confirmRecentWork():
 
     for recentCompletion in recentlyCompleted:
         dateString, timeSlot, task = recentCompletion["dateString"], recentCompletion["timeSlot"], recentCompletion["task"]
-        answer = validatedInput(f"[{dateString} {timeSlot.timeString}] - {task.name}\n", "Please answer with Y or N", lambda inp: inp.lower() in {'y', 'n'})
+        answer = ui_util.validatedInput(f"[{dateString} {timeSlot.timeString}] - {task.name}\n", "Please answer with Y or N", lambda inp: inp.lower() in {'y', 'n'})
         if answer.lower() == 'y': # Add completion time
             status = task.addCompletionTime(timeSlot.durationInMinutes)
             taskStates[task] = status
         else:
-            answer = int(validatedInput("Was this timeslot missed out completely (1) or only partially (2)", "Error: Please answer with 1 or 2", lambda inp: inp in {'1', '2'}))
+            answer = int(ui_util.validatedInput("Was this timeslot missed out completely (1) or only partially (2)", "Error: Please answer with 1 or 2", lambda inp: inp in {'1', '2'}))
             if answer == 1:
                 print("Thanks! Skipping...")
                 continue
             elif answer == 2:
                 while True:
-                    ts = timeSlotInput("Please enter the start time of the correct time slot (HH:MM): ", "Please enter the end time of the correct time slot (HH:MM): ")
+                    ts = ui_util.timeSlotInput("Please enter the start time of the correct time slot (HH:MM): ", "Please enter the end time of the correct time slot (HH:MM): ")
                     if timeSlot.containsOrEquals(ts):
                         status = task.addCompletionTime(ts.durationInMinutes)
                         taskStates[task] = 0
@@ -101,7 +106,8 @@ def confirmRecentWork():
         taskStatus = taskStates[task]
         if taskStatus == 1:
             print(f"The following task has exceeded its MINIMUM time requirement: {task.name}")
-            answer = validatedInput("Is the task already completed (y/n)? ", "Error: Please answer with Y or N", lambda inp: inp.lower() in {'y','n'})
+            answer = ui_util.validatedInput("Is the task already completed (y/n)? ", "Error: Please answer with Y or N", lambda inp: inp.lower() in {'y','n'})
+            # TODO Refactor to isTaskFinished
             if answer.lower() == 'y':
                 pass # TODO Mark task as completed
             elif answer.lower() == 'n':
@@ -110,12 +116,13 @@ def confirmRecentWork():
                 print("Impossible error A77FD223GS in UI")
         elif taskStatus == 2:
             print(f"The following task has exceeded its MAXIMUM time requirement: {task.name}")
-            answer = validatedInput("Is the task completed (y/n)? ", "Error: Please answer with Y or N", lambda inp: inp.lower() in {'y', 'n'})
+            # TODO Refactor to isTaskFinished
+            answer = ui_util.validatedInput("Is the task completed (y/n)? ", "Error: Please answer with Y or N", lambda inp: inp.lower() in {'y', 'n'})
             if answer.lower() == 'y':
                 pass # TODO Mark task as completed
             elif answer.lower() == 'n':
                 while True:
-                    additionalHours = floatInput("How much longer do you think the task will take (hours)? ")
+                    additionalHours = ui_util.floatInput("How much longer do you think the task will take (hours)? ")
                     if additionalHours > 0:
                         task.addTimeRequirement(round(additionalHours * 60))
                         if task.maxRemainingTime <= 0:
@@ -161,6 +168,10 @@ def mainMenu():
                 print("Invalid number!")
         except KeyboardInterrupt:
             print("Aborted by user.")
+
+def showDays(): # Debug
+    for day in days:
+        print(day)
 
 def showSchedule():
     print(schedule)
@@ -210,27 +221,20 @@ def addTaskMenu():
             print("Invalid number!")
 
 def addTaskCompletionTime():
-    selectedTask = taskSelection(tasks, "Please select the task you wish to add time to: ")
+    selectedTask = ui_util.taskSelection(tasks, "Please select the task you wish to add time to: ")
     while True:
         minutesToAdd = intput("How much time do you wish to add to this task (MINUTES)? ", "Error: Please enter a positive number.")
         if minutesToAdd > 0:
-            selectedTask.addCompletionTime(minutesToAdd)
+            status = selectedTask.addCompletionTime(minutesToAdd)
+            if status > 0:
+                isTaskFinished(selectedTask, status)
             return
         print("Error: Please enter a positive number.")
 
-def taskSelection(tasks: [Task], info: str) -> Task:
-    for i, task in enumerate(tasks):
-        print(f"{i}: {showTaskSummary(task)}")
-
-    while True:
-        choice = intput(info, f"Error: Please select a number from 0 to {len(tasks) - 1}.")
-        if choice >= 0 and choice < len(tasks):
-            return tasks[choice]
-        print(f"Error: Please select a number from 0 to {len(tasks) - 1}.")
 
 def wipeTask():
     regularTasks = getActiveRegularTasks()
-    taskToWipe = taskSelection(regularTasks, "Please select the task you wish to remove: ")
+    taskToWipe = ui_util.taskSelection(regularTasks, "Please select the task you wish to remove: ")
     tasks.remove(taskToWipe)
     schedule.wipeTask(taskToWipe)
     print(f"Task `{taskToWipe}` was removed!")
@@ -240,9 +244,9 @@ def getActiveRegularTasks():
 
 def addRecurringTaskToConfig():
     try:
-        task = taskInput(hasDeadline=False)
+        task = ui_util.taskInput(hasDeadline=False)
         task.updateValue("recurringTaskUUID", task.uuid)
-        startDay = dayDateInput("What is the START date of this repeating task? ")
+        startDay = ui_util.dayDateInput("What is the START date of this repeating task? ")
         start = arrow.Arrow(startDay.year, startDay.month, startDay.day, hour=0, minute=0, microsecond=0)
         task.updateValue("start", start)
         while True:
@@ -259,30 +263,12 @@ def addRecurringTaskToConfig():
 
 def addTask(hasDeadline=True):
     try:
-        task = taskInput(hasDeadline=hasDeadline)
+        task = ui_util.taskInput(hasDeadline=hasDeadline)
         tasks.append(task)
         print("Task added successfully!")
     except KeyboardInterrupt:
         print("Aborted by user. Returning to main menu")
 
-
-def taskInput(hasDeadline=True) -> Task:
-    name = input("Please enter the task name: ")
-    minTime = floatInput("How much time does this task require AT LEAST (hours)? ") * 60
-    maxTime = floatInput("How much time does this task require AT MOST (hours)? ") * 60
-
-    priority = intput("Please enter a priority for this task (from 1 to 10): ", error="This is not a valid number! Please enter a valid whole number.")
-
-    if hasDeadline:
-        deadline = dayDateInput("Please enter the DAY ([DATEFORMAT]) of the deadline: ")
-        time = timeInput("Please enter the TIME (HH:MM) of the deadline: ")
-        deadline = arrow.get(deadline).shift(hours=time.hours, minutes=time.minutes)
-    else:
-        deadline = None
-
-    minBlock = intput("What is the smallest block size that this task can be split up into (minutes)? ", "Invalid time! Please enter a valid whole number.")
-    
-    return Task(util.generateUUID(), name, minTime, maxTime, priority, deadline, minBlock)
 
 def showActiveTasks(): 
     print("=================================")
@@ -291,7 +277,7 @@ def showActiveTasks():
         if regularTasks:
             print("Regular Tasks:")
             for task in regularTasks:
-                print(showTaskSummary(task))
+                print(ui_util.showTaskSummary(task))
         else:
             print("~~~No regular Tasks~~~")
         
@@ -301,14 +287,14 @@ def showActiveTasks():
             if futureGeneratedTasks:
                 print("Recurring Tasks:")
                 for recurringTaskDict in config["recurringTasks"]:
-                    #print(f"{showTaskSummary(recurringTaskDict['task'],recurring=True)} (Interval: {recurringTaskDict['interval']} days) from {util.dateString(recurringTaskDict['startDate'])}")
+                    #print(f"{ui_util.showTaskSummary(recurringTaskDict['task'],recurring=True)} (Interval: {recurringTaskDict['interval']} days) from {util.dateString(recurringTaskDict['startDate'])}")
                     recurringTaskUUID = recurringTaskDict["task"].recurringTaskUUID
                     # Find the generated task relating to the current week
                     generatedTasks = sorted([task for task in futureGeneratedTasks if task.recurringTaskUUID == recurringTaskUUID], key=lambda task: task.deadline)
 
                     for gtask in generatedTasks:
                         if gtask.start <= currentArrow and gtask.deadline >= currentArrow:
-                            print(f"{showTaskSummary(gtask)} (Interval: {recurringTaskDict['interval']} days)")
+                            print(f"{ui_util.showTaskSummary(gtask)} (Interval: {recurringTaskDict['interval']} days)")
                             break
             else:
                 print("~~~No recurring Tasks in current week~~~")
@@ -318,63 +304,10 @@ def showActiveTasks():
         print("You have no active tasks!")
     print("=================================")
 
-def showTaskSummary(task: Task, recurring=False) -> str:
-    # To do - show progress in ascii art, etc etc
-    if recurring:
-        return task.displayRecurringTask()
-    else:
-        return repr(task)
-
-def showDays(): # Debug
-    for day in days:
-        print(day)
-
-def timeSlotInput(startTimeInfo: str, endTimeInfo: str) -> TimeSlot:
-    while True:
-        try:
-            startTime = timeInput(startTimeInfo)
-            endTime = timeInput(endTimeInfo)
-            return TimeSlot(startTime, endTime)
-        except ValueError as e:
-            print(e)
-
-def timeInput(info: str) -> Time:
-    while True:
-        try:
-            timeString = input(info)
-            time = Time.fromString(timeString)
-            return time
-        except (IndexError, ValueError):
-            print("Invalid Time!")
-
-# If the String contains the placeholder `[DATEFORMAT]`, it will be replaced by the actual date format.
-def dayDateInput(info: str) -> date:
-    while True:
-        try:
-            dateformat = "DD.MM.YYYY"
-            dateString = input(info.replace("[DATEFORMAT]", dateformat))
-            return arrow.get(dateString, dateformat).date()
-        except Exception as e:
-            print(e)
-            print("Invalid Date!")
-
-def dayInput(info: str) -> Day:
-    while True:
-        try:
-            dayDate = dayDateInput(info)
-            return fetchDay(dayDate)
-        except IndexError as e:
-            print(e)
-
-def fetchDay(date: date) -> Day:
-    for day in days:
-        if day.date == date:
-            return day
-    raise IndexError(f"Day '{date}' does not exist in the calendar. Is it in the past or very far in the future?")
 
 def addAppointment(day: Day):
     name = input("Please enter a name for the Appointment: ")
-    timeSlot = timeSlotInput("Please enter the start time of the Appointment (HH:MM): ", "Please enter the end time of the Appointment (HH:MM): ")
+    timeSlot = ui_util.timeSlotInput("Please enter the start time of the Appointment (HH:MM): ", "Please enter the end time of the Appointment (HH:MM): ")
     appointment = Appointment(name, timeSlot)
 
     day.addAppointment(appointment)
@@ -390,7 +323,7 @@ def removeAppointment(day: Day):
 def addRegularTimeSlot(weekday: bool):
     while True:
         try:
-            timeSlot = timeSlotInput("Please enter the start time of the TimeSlot (HH:MM): ", "Please enter the end time of the TimeSlot (HH:MM): ")
+            timeSlot = ui_util.timeSlotInput("Please enter the start time of the TimeSlot (HH:MM): ", "Please enter the end time of the TimeSlot (HH:MM): ")
             if weekday:
                 lst = config["weekdayTimeSlots"]
             else:
@@ -464,7 +397,7 @@ def unmarkDaySpecial(day):
     storage.initDay(day, config) # Re-adding temporary/default TimeSlots
 
 def daySelectionMenu():
-    day = dayInput("Please enter the DAY ([DATEFORMAT]) you want to select: ")
+    day = ui_util.dayInput(days, "Please enter the DAY ([DATEFORMAT]) you want to select: ")
     return editDayMenu(day)
 
 def editDayMenu(day: Day):
@@ -500,7 +433,7 @@ def editDayMenu(day: Day):
 
 def addTimeSlot(day: Day):
     while True:
-        ts = timeSlotInput("Please enter the START time (HH:MM) of the TimeSlot: ", "Please enter the END time (HH:MM) of the TimeSlot: ")
+        ts = ui_util.timeSlotInput("Please enter the START time (HH:MM) of the TimeSlot: ", "Please enter the END time (HH:MM) of the TimeSlot: ")
         try:
             return day.addTimeSlot(ts)
         except ValueError as e:
@@ -524,19 +457,6 @@ def removeCustomTimeSlot(day: Day):
     else:
         print("There are no custom TimeSlots for this day!")
 
-def validatedInput(info: str, error: str, validator):
-    while True:
-        userInput = input(info)
-        if validator(userInput):
-            return userInput
-        print(error)
-
-def floatInput(info: str):
-    while True:
-        try:
-            return float(input(info))
-        except ValueError:
-            print("Please return a valid number! Decimals are separated by '.', not ','!")
 
 def displayToday():
     displayScheduleDay(arrow.now().date())
@@ -572,9 +492,9 @@ def viewCalendarMenu():
         elif choice == 2:
             displayToday()
         elif choice == 3:
-            displayScheduleDay(dayDateInput("Please enter the DAY ([DATEFORMAT]) that you wish to look at: "))
+            displayScheduleDay(ui_util.dayDateInput("Please enter the DAY ([DATEFORMAT]) that you wish to look at: "))
         elif choice == 4:
-            showWeek(dayDateInput("Please enter any DAY ([DATEFORMAT]) from the week that you wish to look at: "))
+            showWeek(ui_util.dayDateInput("Please enter any DAY ([DATEFORMAT]) from the week that you wish to look at: "))
         elif choice == 9:
             return
         else:
