@@ -1,9 +1,8 @@
 TO-DO
 -> Make schedule calculation consider START DATES of recurring tasks (do not allow scheduling before start dates; update timegraph
--> Properly display recurring tasks
--> Ability to remove tasks
 -> Ability to remove interval tasks
 -> Ability to complete tasks manually (needs to trigger a lastWorkConfirmed procedure immediately to avoid async)
+-> Add lastWorkConfirmed procedure when manually adding completiontime to task in ui
 -> Test UI confirmation sequence
 -> Go through schedule-weeks in UI (with commands like "next", "previous") and check constraints on weeks that are too far in the past
 

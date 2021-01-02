@@ -91,7 +91,7 @@ def calculateSchedule(globalDays: [Day], tasks: [Task], currentSchedule: Schedul
 
 def calculateHappySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
     # Only calculates the new schedule with NO REGARD TO THE PAST SCHEDULE
-
+    
     for tmpTask in tmpTasks:
         if tmpTask.maxRemainingTime <= 0:
             print(f"WARNING: Already completed tmpTask! MaxRemainingTime: {tmpTask.maxRemainingTime}")
@@ -222,6 +222,7 @@ def calculateRiskySchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: 
     raise Exception("Risky schedule is not implemented and a low priority feature")
 
 def calculateSadSchedule(tmpTasks: [Task], tmpDays: [Day], lastWorkConfirmed: arrow.Arrow, start: arrow.Arrow, debug=False) -> Schedule:
+    print(tmpTasks)
     print("WARNING: Happy schedule is not possible; Using sad schedule algorithm. This algorithm is HIGHLY EXPERIMENTAL and may drop tasks arbitrarily.")
     # Temporary solution: Just delete low priority tasks till it fits
     prioritisedTasks = sorted(tmpTasks, key=getTaskHappySignificance, reverse=True)

@@ -148,6 +148,13 @@ class Schedule():
                     return # Since the TimeSlot was bigger than the remaining minutesToSchedule, we are done here now.
         raise ImpossibleScheduleException("Unable to schedule task!")
 
+    # Removes the target Task from all FUTURE moments
+    def wipeTask(self, task: Task):
+        for day in self.__days:
+            for ts in day.timeSlots:
+                if ts.taskOrAppointment is not None and ts.taskOrAppointment == task:
+                    ts.taskOrAppointment = None
+
 
     def __repr__(self) -> str:
         return f"Schedule ({util.formatDate(self.__days[0].date, time=False)} - {util.formatDate(self.__days[-1].date, time=False)}\n" + "\n".join([repr(day) for day in self.__days])

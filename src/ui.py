@@ -18,6 +18,7 @@ schedule = storage.loadSchedule(tasks, days)
 
 def autosave():
     # Autosaving
+    print("Autosaving...")
     storage.saveConfig(config)
     storage.saveDays(days)
     storage.saveTasks(tasks)
@@ -25,12 +26,18 @@ def autosave():
 
 def autoupdate():
     global config, days, tasks, schedule
+    print("Autoupdating...")
+    #print("Loading config...")
     config = storage.initConfig() # Objects are stored in their exported form (dict) in the config
-    days = storage.initDays(config) # This might be a PERFORMANCE KILLER
+    #print("Loading days...")
+    days = storage.initDays(config)
+    #print("Loading tasks...")
     tasks = storage.loadTasks(config, days)
+    #print("Loading schedule...")
     schedule = storage.loadSchedule(tasks, days)
     confirmRecentWork()
-    schedule = calculateSchedule(days, tasks, schedule, util.smoothCurrentArrow()) # This might be a PERFORMANCE KILLER
+    #print("Calculating new schedule...")
+    schedule = calculateSchedule(days, tasks, schedule, util.smoothCurrentArrow()) # This IS a PERFORMANCE KILLER
 
 def onInit():
     print("Initialising...")
@@ -66,7 +73,7 @@ def confirmRecentWork():
             status = task.addCompletionTime(timeSlot.durationInMinutes)
             taskStates[task] = status
         else:
-            answer = validatedInput("Was this timeslot missed out completely (1) or only partially (2)", "Error: Please answer with 1 or 2", lambda inp: inp in {'1', '2'})
+            answer = int(validatedInput("Was this timeslot missed out completely (1) or only partially (2)", "Error: Please answer with 1 or 2", lambda inp: inp in {'1', '2'}))
             if answer == 1:
                 print("Thanks! Skipping...")
                 continue
@@ -165,7 +172,7 @@ def viewTaskMenu():
         print("1) View Tasks")
         print("2) Add Task")
         print("3) Add time to task")
-        print("4) Remove Task")
+        print("4) Wipe Task (Remove completely & retroactively)")
         print("9) Back to Main Menu")
         choice = intput("", "Not a valid number!")
         
@@ -175,8 +182,8 @@ def viewTaskMenu():
             addTaskMenu()
         elif choice == 3:
             addTaskCompletionTime()
-        elif choice == 3:
-            removeTask()
+        elif choice == 4:
+            wipeTask()
         elif choice == 9:
             return
         else:
@@ -203,11 +210,33 @@ def addTaskMenu():
             print("Invalid number!")
 
 def addTaskCompletionTime():
-    showActiveTasks() # TODO This needs to show some sort of numbering that the user can then use to target that task
-    print("TODO")
+    selectedTask = taskSelection(tasks, "Please select the task you wish to add time to: ")
+    while True:
+        minutesToAdd = intput("How much time do you wish to add to this task (MINUTES)? ", "Error: Please enter a positive number.")
+        if minutesToAdd > 0:
+            selectedTask.addCompletionTime(minutesToAdd)
+            return
+        print("Error: Please enter a positive number.")
 
-def removeTask():
-    print("TODO")
+def taskSelection(tasks: [Task], info: str) -> Task:
+    for i, task in enumerate(tasks):
+        print(f"{i}: {showTaskSummary(task)}")
+
+    while True:
+        choice = intput(info, f"Error: Please select a number from 0 to {len(tasks) - 1}.")
+        if choice >= 0 and choice < len(tasks):
+            return tasks[choice]
+        print(f"Error: Please select a number from 0 to {len(tasks) - 1}.")
+
+def wipeTask():
+    regularTasks = getActiveRegularTasks()
+    taskToWipe = taskSelection(regularTasks, "Please select the task you wish to remove: ")
+    tasks.remove(taskToWipe)
+    schedule.wipeTask(taskToWipe)
+    print(f"Task `{taskToWipe}` was removed!")
+
+def getActiveRegularTasks():
+    return [task for task in tasks if task.recurringTaskUUID is None] # Filter out generated (recurring) tasks
 
 def addRecurringTaskToConfig():
     try:
@@ -267,12 +296,22 @@ def showActiveTasks():
             print("~~~No regular Tasks~~~")
         
         if config["recurringTasks"]:
-            print("Recurring Tasks:")
-            futureGeneratedTasks = [task for task in tasks if task.recurringTaskUUID is not None and task.start]
-            for recurringTaskDict in config["recurringTasks"]:
-                #print(f"{showTaskSummary(recurringTaskDict['task'],recurring=True)} (Interval: {recurringTaskDict['interval']} days) from {util.dateString(recurringTaskDict['startDate'])}")
-                recurringTaskUUID = recurringTaskDict["task"].recurringTaskUUID
+            currentArrow = util.smoothCurrentArrow()
+            futureGeneratedTasks = [task for task in tasks if task.recurringTaskUUID is not None and task.start < currentArrow]
+            if futureGeneratedTasks:
+                print("Recurring Tasks:")
+                for recurringTaskDict in config["recurringTasks"]:
+                    #print(f"{showTaskSummary(recurringTaskDict['task'],recurring=True)} (Interval: {recurringTaskDict['interval']} days) from {util.dateString(recurringTaskDict['startDate'])}")
+                    recurringTaskUUID = recurringTaskDict["task"].recurringTaskUUID
+                    # Find the generated task relating to the current week
+                    generatedTasks = sorted([task for task in futureGeneratedTasks if task.recurringTaskUUID == recurringTaskUUID], key=lambda task: task.deadline)
 
+                    for gtask in generatedTasks:
+                        if gtask.start <= currentArrow and gtask.deadline >= currentArrow:
+                            print(f"{showTaskSummary(gtask)} (Interval: {recurringTaskDict['interval']} days)")
+                            break
+            else:
+                print("~~~No recurring Tasks in current week~~~")
         else:
             print("~~~No recurring Tasks~~~")
     else:
